@@ -1,0 +1,41 @@
+{
+  "name": "ventafacil",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build:exe": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.ventafacil.pos",
+    "productName": "VentaFácil POS",
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axlmikelcrisostomo-bot/VentaFacil.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/axlmikelcrisostomo-bot/VentaFacil/issues"
+  },
+  "homepage": "https://github.com/axlmikelcrisostomo-bot/VentaFacil#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "body-parser": "^2.3.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "electron": "^43.3.0",
+    "electron-builder": "^26.15.3"
+  }
+}

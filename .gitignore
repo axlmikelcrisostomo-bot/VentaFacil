@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Environment & Credentials
+.env
+.env.*
+*.pem
+*.crt
+*.key
+sol_credentials.json
+
+# Local SQLite Databases (Store data - Do NOT upload to GitHub)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+database/*.db
+
+# CSV & Data Exports (Store inventory data)
+*.csv
+
+# Logs & OS Files
+*.log
+.DS_Store
+Thumbs.db
+
+# Build & Compiled artifacts
+dist/
+build/
+VentaFacilDesktop/bin/
+VentaFacilDesktop/obj/
