@@ -17,6 +17,33 @@ function parseStock(val) {
   return isNaN(num) ? 0 : num;
 }
 
+function parseDate(val) {
+  if (!val || typeof val !== 'string') return null;
+  val = val.trim();
+  if (!val) return null;
+
+  // DD/MM/YYYY o DD-MM-YYYY
+  const dmyMatch = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    const time = dmyMatch[4] ? ` ${dmyMatch[4].padStart(2, '0')}:${dmyMatch[5]}:${dmyMatch[6] || '00'}` : '';
+    return `${year}-${month}-${day}${time}`;
+  }
+
+  // YYYY-MM-DD
+  const ymdMatch = val.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = ymdMatch[2].padStart(2, '0');
+    const day = ymdMatch[3].padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  return val;
+}
+
 function parseCSV(content) {
   const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
   if (lines.length === 0) return [];
@@ -97,7 +124,8 @@ async function processRecordsArray(records) {
     const stock = parseStock(record.stock || record.cantidad || 0);
     const minStock = parseFloat(record.min_stock || record.stock_minimo || 5) || 5;
     const unitMeasure = record.unidad_medida || record.unit_measure || record.unidad || 'UNIDAD';
-    const expirationDate = record.fecha_vencimiento || record.vencimiento || null;
+    const expirationDate = parseDate(record.fecha_vencimiento || record.vencimiento);
+    const registrationDate = parseDate(record.fecha_registro || record.registro || record.fecha);
     const status = record.estado || 'DISPONIBLE';
 
     if (!name) continue;
@@ -134,21 +162,23 @@ async function processRecordsArray(records) {
       finalBarcode = await getNextReservedSKU();
     }
 
-    // 4. Upsert en products
+    // 4. Upsert en products con fecha de registro
     const existingProduct = await get('SELECT barcode FROM products WHERE barcode = ?', [finalBarcode]);
 
     if (existingProduct) {
+      const updateDate = registrationDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
       await run(`
         UPDATE products 
-        SET name = ?, brand_id = ?, category_id = ?, purchase_price = ?, sale_price = ?, stock = ?, min_stock = ?, expiration_date = ?, status = ?, unit_measure = ?, updated_at = CURRENT_TIMESTAMP
+        SET name = ?, brand_id = ?, category_id = ?, purchase_price = ?, sale_price = ?, stock = ?, min_stock = ?, expiration_date = ?, status = ?, unit_measure = ?, updated_at = ?
         WHERE barcode = ?
-      `, [name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, finalBarcode]);
+      `, [name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, updateDate, finalBarcode]);
       updatedCount++;
     } else {
+      const createDate = registrationDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
       await run(`
-        INSERT INTO products (barcode, name, brand_id, category_id, purchase_price, sale_price, stock, min_stock, expiration_date, status, unit_measure)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [finalBarcode, name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure]);
+        INSERT INTO products (barcode, name, brand_id, category_id, purchase_price, sale_price, stock, min_stock, expiration_date, status, unit_measure, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [finalBarcode, name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, createDate, createDate]);
       importedCount++;
     }
   }

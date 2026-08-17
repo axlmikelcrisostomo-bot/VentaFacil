@@ -63,7 +63,9 @@ class ProductModel {
       expiration_date = null,
       status = 'DISPONIBLE',
       is_bulk = 0,
-      unit_measure = 'UNIDAD'
+      unit_measure = 'UNIDAD',
+      created_at = null,
+      updated_at = null
     } = data;
 
     const existing = await this.getByBarcode(barcode);
@@ -71,9 +73,12 @@ class ProductModel {
       throw new Error(`El código/SKU "${barcode}" ya se encuentra registrado con el producto: ${existing.name}`);
     }
 
+    const createDate = created_at || new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const updateDate = updated_at || createDate;
+
     const sql = `
-      INSERT INTO products (barcode, name, brand_id, category_id, purchase_price, sale_price, stock, min_stock, expiration_date, status, is_bulk, unit_measure)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (barcode, name, brand_id, category_id, purchase_price, sale_price, stock, min_stock, expiration_date, status, is_bulk, unit_measure, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await run(sql, [
@@ -88,7 +93,9 @@ class ProductModel {
       expiration_date || null,
       status || 'DISPONIBLE',
       parseInt(is_bulk, 10) ? 1 : 0,
-      unit_measure || 'UNIDAD'
+      unit_measure || 'UNIDAD',
+      createDate,
+      updateDate
     ]);
 
     return { barcode: barcode.trim() };
@@ -108,7 +115,8 @@ class ProductModel {
       status,
       is_bulk,
       unit_measure,
-      is_active
+      is_active,
+      updated_at
     } = data;
 
     const fields = [];
@@ -128,10 +136,11 @@ class ProductModel {
     if (unit_measure !== undefined) { fields.push('unit_measure = ?'); params.push(unit_measure); }
     if (is_active !== undefined) { fields.push('is_active = ?'); params.push(parseInt(is_active, 10) ? 1 : 0); }
 
-    fields.push('updated_at = CURRENT_TIMESTAMP');
-
-    if (fields.length === 1) {
-      return;
+    if (updated_at !== undefined) {
+      fields.push('updated_at = ?');
+      params.push(updated_at);
+    } else {
+      fields.push('updated_at = CURRENT_TIMESTAMP');
     }
 
     const sql = `UPDATE products SET ${fields.join(', ')} WHERE barcode = ?`;
