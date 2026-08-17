@@ -52,13 +52,13 @@ function parseCSV(content) {
 
   let headerIndex = lines.findIndex(line => {
     const l = line.toLowerCase();
-    return l.includes('codigo') || l.includes('sku') || l.includes('barcode') || l.includes('producto') || l.includes('name');
+    return l.includes('codigo') || l.includes('sku') || l.includes('barcode') || l.includes('producto') || l.includes('name') || l.includes('descripcion');
   });
 
   if (headerIndex === -1) headerIndex = 0;
 
   const headerLine = lines[headerIndex];
-  const delimiter = headerLine.includes(';') ? ';' : ',';
+  const delimiter = headerLine.includes('\t') ? '\t' : (headerLine.includes(';') ? ';' : ',');
 
   const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
   const rows = [];
@@ -125,15 +125,15 @@ async function importData(inputSource) {
 
     for (const record of records) {
       const inputCode = record.sku || record.id_codigo || record.barcode || record.codigo || record.codigo_barras;
-      const name = record.nombre_producto || record.name || record.nombre || record.producto;
+      const name = record.descripcion_producto || record.nombre_producto || record.name || record.nombre || record.producto;
       const brandName = record.marca_producto || record.marca || '';
-      const categoryName = record.tipo_producto || record.category_name || record.categoria || record.category || 'General';
+      const categoryName = record.categoria || record.tipo_producto || record.category_name || record.category || 'General';
 
       const purchasePrice = parseMoney(record.precio_compra || record.precio_costo || record.costo || record.compra || record.purchase_price || 0);
-      const salePrice = parseMoney(record.precio_unitario || record.precio_venta || record.sale_price || record.precio || 0);
+      const salePrice = parseMoney(record.precio_venta || record.precio_unitario || record.sale_price || record.precio || 0);
       const stock = parseStock(record.stock || record.cantidad || 0);
       const minStock = parseFloat(record.min_stock || record.stock_minimo || 5) || 5;
-      const unitMeasure = record.unit_measure || record.unidad || 'UNIDAD';
+      const unitMeasure = record.unidad_medida || record.unit_measure || record.unidad || 'UNIDAD';
       const expirationDate = record.fecha_vencimiento || record.vencimiento || null;
       const status = record.estado || 'DISPONIBLE';
 
