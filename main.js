@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { initDatabase } = require('./config/database');
-const seedDatabase = require('./database/seeders');
+const { seed } = require('./database/seeders');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 // Controladores
 const ProductController = require('./src/controllers/ProductController');
 const CategoryController = require('./src/controllers/CategoryController');
+const BrandController = require('./src/controllers/BrandController');
 const SaleController = require('./src/controllers/SaleController');
 const CustomerController = require('./src/controllers/CustomerController');
 const StockController = require('./src/controllers/StockController');
@@ -37,6 +38,12 @@ function startInternalServer() {
     serverApp.post('/api/categories', CategoryController.create);
     serverApp.put('/api/categories/:id', CategoryController.update);
     serverApp.delete('/api/categories/:id', CategoryController.delete);
+
+    serverApp.get('/api/brands', BrandController.getAll);
+    serverApp.get('/api/brands/:id', BrandController.getById);
+    serverApp.post('/api/brands', BrandController.create);
+    serverApp.put('/api/brands/:id', BrandController.update);
+    serverApp.delete('/api/brands/:id', BrandController.delete);
 
     serverApp.post('/api/stock/movement', StockController.registerMovement);
     serverApp.get('/api/stock/alerts', StockController.getLowStockAlerts);
@@ -67,7 +74,7 @@ function startInternalServer() {
 
 async function createWindow() {
   await initDatabase();
-  await seedDatabase();
+  await seed();
   await startInternalServer();
 
   mainWindow = new BrowserWindow({
@@ -91,7 +98,7 @@ async function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.on('ready', createWindow);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -100,27 +107,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
+  if (mainWindow === null) {
     createWindow();
   }
-});
-
-ipcMain.handle('print-thermal-receipt', async (event, htmlContent) => {
-  let printWindow = new BrowserWindow({
-    show: false,
-    webPreferences: { nodeIntegration: true }
-  });
-
-  printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`);
-
-  printWindow.webContents.on('did-finish-load', () => {
-    printWindow.webContents.print({
-      silent: true,
-      printBackground: true,
-      deviceName: ''
-    }, (success, failureReason) => {
-      if (!success) console.log('Resultado de impresión silenciosa:', failureReason);
-      printWindow.close();
-    });
-  });
 });

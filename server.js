@@ -4,7 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const { initDatabase } = require('./config/database');
-const seedDatabase = require('./database/seeders');
+const { seed } = require('./database/seeders');
 
 // Controladores
 const ProductController = require('./src/controllers/ProductController');
@@ -48,12 +48,12 @@ app.post('/api/brands', BrandController.create);
 app.put('/api/brands/:id', BrandController.update);
 app.delete('/api/brands/:id', BrandController.delete);
 
-// 3. Control de Stock / Kárdex
+// 4. Control de Stock / Kárdex
 app.post('/api/stock/movement', StockController.registerMovement);
 app.get('/api/stock/alerts', StockController.getLowStockAlerts);
 app.get('/api/stock/movements', StockController.getMovements);
 
-// 4. Clientes y FIADOS
+// 5. Clientes y FIADOS
 app.get('/api/customers', CustomerController.getAll);
 app.post('/api/customers', CustomerController.create);
 app.put('/api/customers/:id', CustomerController.update);
@@ -61,11 +61,11 @@ app.delete('/api/customers/:id', CustomerController.delete);
 app.post('/api/customers/payment', CustomerController.registerPayment);
 app.get('/api/customers/:id/history', CustomerController.getCreditHistory);
 
-// 5. Facturación Electrónica SUNAT (BVE)
+// 6. Facturación Electrónica SUNAT (BVE)
 app.get('/api/sunat/config', SunatController.getCompanyConfig);
 app.post('/api/sunat/sync', SunatController.syncPendingBoletas);
 
-// 6. Ventas & Ticket 58mm
+// 7. Ventas & Ticket 58mm
 app.post('/api/sales', SaleController.createSale);
 app.get('/api/sales', SaleController.getAll);
 app.get('/api/sales/:id', SaleController.getById);
@@ -76,7 +76,7 @@ app.get('/api/sales/:id/escpos', SaleController.getEscPosBytes);
 async function start() {
   try {
     await initDatabase();
-    await seedDatabase();
+    await seed();
 
     app.listen(PORT, () => {
       console.log(`=======================================================`);
