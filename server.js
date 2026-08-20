@@ -14,6 +14,7 @@ const SaleController = require('./src/controllers/SaleController');
 const CustomerController = require('./src/controllers/CustomerController');
 const StockController = require('./src/controllers/StockController');
 const SunatController = require('./src/controllers/SunatController');
+const PrinterController = require('./src/controllers/PrinterController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +33,7 @@ app.get('/api/products', ProductController.getAll);
 app.get('/api/products/barcode/:barcode', ProductController.getByBarcode);
 app.post('/api/products', ProductController.create);
 app.post('/api/products/import-csv', ProductController.importCSV);
+app.post('/api/products/clear-catalog', ProductController.clearCatalog);
 app.put('/api/products/:id', ProductController.update);
 app.delete('/api/products/:id', ProductController.delete);
 
@@ -71,6 +73,12 @@ app.get('/api/sales', SaleController.getAll);
 app.get('/api/sales/:id', SaleController.getById);
 app.get('/api/sales/:id/ticket', SaleController.getTicketText);
 app.get('/api/sales/:id/escpos', SaleController.getEscPosBytes);
+app.post('/api/sales/:id/cancel', SaleController.cancelSale);
+
+// 8. Impresora Térmica 58mm / 80mm
+app.get('/api/printers', PrinterController.getPrinters);
+app.post('/api/printers/test', PrinterController.testPrint);
+app.post('/api/sales/:id/print', PrinterController.printSaleTicket);
 
 // Inicializar la Base de Datos SQLite y servidor
 async function start() {

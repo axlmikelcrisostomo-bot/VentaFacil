@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, session } = require('electron');
 const path = require('path');
 const { initDatabase } = require('./config/database');
 const { seed } = require('./database/seeders');
@@ -14,6 +14,7 @@ const SaleController = require('./src/controllers/SaleController');
 const CustomerController = require('./src/controllers/CustomerController');
 const StockController = require('./src/controllers/StockController');
 const SunatController = require('./src/controllers/SunatController');
+const PrinterController = require('./src/controllers/PrinterController');
 
 let mainWindow;
 
@@ -23,14 +24,28 @@ function startInternalServer() {
     const PORT = 3000;
 
     serverApp.use(cors());
-    serverApp.use(bodyParser.json());
-    serverApp.use(express.static(path.join(__dirname, 'src', 'public')));
+    serverApp.use(bodyParser.json({ limit: '50mb' }));
+    serverApp.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+    // Deshabilitar caché HTTP para recargas siempre frescas
+    serverApp.use((req, res, next) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      next();
+    });
+
+    serverApp.use(express.static(path.join(__dirname, 'src', 'public'), {
+      etag: false,
+      maxAge: 0
+    }));
 
     // Rutas API
     serverApp.get('/api/products', ProductController.getAll);
     serverApp.get('/api/products/barcode/:barcode', ProductController.getByBarcode);
     serverApp.post('/api/products', ProductController.create);
     serverApp.post('/api/products/import-csv', ProductController.importCSV);
+    serverApp.post('/api/products/clear-catalog', ProductController.clearCatalog);
     serverApp.put('/api/products/:id', ProductController.update);
     serverApp.delete('/api/products/:id', ProductController.delete);
 
@@ -64,6 +79,12 @@ function startInternalServer() {
     serverApp.get('/api/sales/:id', SaleController.getById);
     serverApp.get('/api/sales/:id/ticket', SaleController.getTicketText);
     serverApp.get('/api/sales/:id/escpos', SaleController.getEscPosBytes);
+    serverApp.post('/api/sales/:id/cancel', SaleController.cancelSale);
+
+    // 8. Impresora Térmica 58mm / 80mm
+    serverApp.get('/api/printers', PrinterController.getPrinters);
+    serverApp.post('/api/printers/test', PrinterController.testPrint);
+    serverApp.post('/api/sales/:id/print', PrinterController.printSaleTicket);
 
     serverApp.listen(PORT, () => {
       console.log(`Servidor SQLite offline ejecutándose internamente en puerto ${PORT}`);
@@ -77,6 +98,11 @@ async function createWindow() {
   await seed();
   await startInternalServer();
 
+  // Limpiar caché de sesión de Electron de forma segura
+  if (session.defaultSession) {
+    session.defaultSession.clearCache().catch(() => {});
+  }
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -87,7 +113,8 @@ async function createWindow() {
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      devTools: true
     }
   });
 

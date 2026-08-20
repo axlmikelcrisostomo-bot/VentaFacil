@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "server": "node server.js",
+    "clean:cache": "node scripts/clear-all-cache.js",
     "build:exe": "electron-builder --win nsis"
   },
   "build": {

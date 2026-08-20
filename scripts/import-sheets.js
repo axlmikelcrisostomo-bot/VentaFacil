@@ -2,12 +2,6 @@
  * ====================================================================
  * VENTA FÁCIL POS - SCRIPT DE IMPORTACIÓN DESDE GOOGLE SHEETS / CSV
  * ====================================================================
- * Soporta importar tanto archivos locales (.csv) como enlaces directos
- * de Google Sheets (URLs públicas de exportación CSV).
- *
- * USO:
- *   node scripts/import-sheets.js mi_inventario.csv
- *   node scripts/import-sheets.js "https://docs.google.com/spreadsheets/d/TU_ID/export?format=csv"
  */
 
 const fs = require('fs');
@@ -42,7 +36,8 @@ function parseMoney(val) {
 
 function parseStock(val) {
   if (!val) return 0;
-  let num = parseFloat(String(val).replace(',', '.'));
+  let cleaned = String(val).replace(/\s+/g, '').replace(',', '.');
+  let num = parseFloat(cleaned);
   return isNaN(num) ? 0 : num;
 }
 
@@ -73,6 +68,31 @@ function parseDate(val) {
   return val;
 }
 
+function splitCSVLine(line, delimiter = ',') {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      result.push(current.trim().replace(/^"|"$/g, ''));
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim().replace(/^"|"$/g, ''));
+  return result;
+}
+
 function parseCSV(content) {
   const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
   if (lines.length === 0) return [];
@@ -87,17 +107,16 @@ function parseCSV(content) {
   const headerLine = lines[headerIndex];
   const delimiter = headerLine.includes('\t') ? '\t' : (headerLine.includes(';') ? ';' : ',');
 
-  const headers = headerLine.split(delimiter).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+  const headers = splitCSVLine(headerLine, delimiter).map(h => h.toLowerCase().trim());
   const rows = [];
 
   for (let i = headerIndex + 1; i < lines.length; i++) {
-    const rawCells = lines[i].split(delimiter);
+    const rawCells = splitCSVLine(lines[i], delimiter);
     if (rawCells.length < Math.min(2, headers.length)) continue;
 
     const row = {};
     headers.forEach((header, index) => {
-      let val = rawCells[index] ? rawCells[index].trim() : '';
-      val = val.replace(/^"|"$/g, '');
+      let val = rawCells[index] !== undefined ? rawCells[index].trim() : '';
       row[header] = val;
     });
     rows.push(row);
@@ -151,7 +170,7 @@ async function importData(inputSource) {
     let brandCount = 0;
 
     for (const record of records) {
-      const inputCode = record.sku || record.id_codigo || record.barcode || record.codigo || record.codigo_barras;
+      const inputCode = record.id_codigo || record.sku || record.barcode || record.codigo || record.codigo_barras;
       const name = record.descripcion_producto || record.nombre_producto || record.name || record.nombre || record.producto;
       const brandName = record.marca_producto || record.marca || '';
       const categoryName = record.categoria || record.tipo_producto || record.category_name || record.category || 'General';
@@ -193,9 +212,9 @@ async function importData(inputSource) {
         }
       }
 
-      // 3. Determinar Código o generar SKU
+      // 3. Código o SKU
       let finalBarcode = inputCode ? inputCode.trim() : '';
-      if (!finalBarcode) {
+      if (!finalBarcode || finalBarcode.toUpperCase() === 'FALTA LLENAR' || finalBarcode.toUpperCase() === 'SIN CODIGO') {
         finalBarcode = await getNextReservedSKU();
       }
 

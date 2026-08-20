@@ -153,6 +153,14 @@ class ProductModel {
     const sql = `DELETE FROM products WHERE barcode = ?`;
     return await run(sql, [barcodeKey.trim()]);
   }
+
+  static async clearAll() {
+    await run(`DELETE FROM products`);
+    try {
+      await run(`DELETE FROM sqlite_sequence WHERE name = 'products'`);
+    } catch (_) {}
+    return { success: true };
+  }
 }
 
 module.exports = ProductModel;

@@ -57,14 +57,14 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 
 CREATE TABLE IF NOT EXISTS stock_movements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_id INTEGER NOT NULL,
+    product_id TEXT NOT NULL,
     movement_type TEXT NOT NULL,
     quantity DECIMAL(10, 3) NOT NULL,
     previous_stock DECIMAL(10, 3) NOT NULL,
     new_stock DECIMAL(10, 3) NOT NULL,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES products(barcode) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
@@ -122,7 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_sales_sunat_status ON sales(sunat_status);
 CREATE TABLE IF NOT EXISTS sale_details (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sale_id INTEGER NOT NULL,
-    product_id INTEGER,
+    product_id TEXT,
     product_name TEXT NOT NULL,
     barcode TEXT,
     unit_price DECIMAL(10, 2) NOT NULL,
@@ -131,8 +131,11 @@ CREATE TABLE IF NOT EXISTS sale_details (
     igv DECIMAL(10, 2) DEFAULT 0.00,
     subtotal DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+    FOREIGN KEY (product_id) REFERENCES products(barcode) ON DELETE SET NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_sale_details_sale ON sale_details(sale_id);
+CREATE INDEX IF NOT EXISTS idx_sale_details_product ON sale_details(product_id);
 
 CREATE TABLE IF NOT EXISTS credit_payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -142,5 +145,8 @@ CREATE TABLE IF NOT EXISTS credit_payments (
     payment_method TEXT DEFAULT 'EFECTIVO',
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id)
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE SET NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_credit_payments_customer ON credit_payments(customer_id);

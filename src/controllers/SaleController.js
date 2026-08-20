@@ -9,7 +9,11 @@ class SaleController {
       res.status(201).json({
         success: true,
         message: 'Venta realizada con éxito',
-        data: sale,
+        data: {
+          ...sale,
+          id: sale.id || sale.saleId,
+          saleId: sale.saleId || sale.id
+        },
         receiptText
       });
     } catch (err) {
@@ -55,6 +59,15 @@ class SaleController {
       res.send(buffer);
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  static async cancelSale(req, res) {
+    try {
+      await SaleModel.cancelSale(req.params.id);
+      res.json({ success: true, message: 'Venta anulada y stock devuelto exitosamente' });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
     }
   }
 }

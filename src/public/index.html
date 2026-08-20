@@ -11,444 +11,927 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-layout">
 
-    <!-- ==================== HEADER ==================== -->
-    <header class="app-header">
-      <div class="brand">
+    <!-- ==================== SIDEBAR IZQUIERDO ==================== -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-brand">
         <div class="logo-icon">⚡</div>
         <div class="brand-text">
           <h1>VentaFácil POS</h1>
-          <span class="sub-title">Sistema de Escritorio 100% Offline · SUNAT BVE</span>
+          <span class="sub-title">100% Offline · SUNAT BVE</span>
         </div>
+        <button class="sidebar-collapse-btn" id="btnToggleSidebar" title="Ocultar / Mostrar Menú">◀</button>
       </div>
 
-      <div class="device-status">
-        <div class="status-pill" id="scannerStatus">
-          <span class="dot"></span> 📷 Escáner: <strong>LISTO</strong>
-        </div>
-        <div class="status-pill" id="printerStatus">
-          <span class="dot"></span> 🖨️ Impresora: <strong>58mm</strong>
-        </div>
-        <div class="status-pill sunat-pill" id="sunatStatusPill">
-          <span class="dot dot-purple"></span> 🇵🇪 SUNAT: <strong id="sunatPillText">VERIFICANDO...</strong>
-        </div>
-      </div>
-
-      <nav class="nav-tabs">
-        <button class="nav-btn active" data-tab="posTab" id="navPos">
-          🛒 <span>Punto de Venta</span>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="posTab" id="navPos" title="Punto de Venta">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-text">Punto de Venta</span>
         </button>
-        <button class="nav-btn" data-tab="customersTab" id="navCustomers">
-          👥 <span>Clientes / Fiados</span>
+        <button class="nav-btn" data-tab="customersTab" id="navCustomers" title="Clientes / Fiados">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">Clientes / Fiados</span>
         </button>
-        <button class="nav-btn" data-tab="inventoryTab" id="navInventory">
-          📦 <span>Inventario</span>
+        <button class="nav-btn" data-tab="inventoryTab" id="navInventory" title="Inventario">
+          <span class="nav-icon">📦</span>
+          <span class="nav-text">Inventario</span>
         </button>
-        <button class="nav-btn" data-tab="sunatTab" id="navSunat">
-          🇵🇪 <span>SUNAT BVE</span>
+        <button class="nav-btn" data-tab="sunatTab" id="navSunat" title="SUNAT BVE">
+          <span class="nav-icon">🇵🇪</span>
+          <span class="nav-text">SUNAT BVE</span>
           <span class="nav-badge" id="navSunatBadge" style="display:none;">0</span>
         </button>
-        <button class="nav-btn" data-tab="categoriesTab" id="navCategories">
-          🏷️ <span>Categorías</span>
+        <button class="nav-btn" data-tab="categoriesTab" id="navCategories" title="Categorías">
+          <span class="nav-icon">🏷️</span>
+          <span class="nav-text">Categorías</span>
         </button>
-        <button class="nav-btn" data-tab="salesHistoryTab" id="navHistory">
-          📜 <span>Historial</span>
+        <button class="nav-btn" data-tab="salesHistoryTab" id="navHistory" title="Historial">
+          <span class="nav-icon">📜</span>
+          <span class="nav-text">Historial</span>
+        </button>
+        <button class="nav-btn" data-tab="settingsTab" id="navSettings" title="Configuración del Sistema">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">Configuración</span>
         </button>
       </nav>
-    </header>
 
-    <!-- ==================== BARRA DE ESCÁNER ==================== -->
-    <div class="scanner-bar">
-      <div class="scanner-input-wrapper">
-        <span class="scanner-icon">🔍</span>
-        <input
-          type="text"
-          id="globalBarcodeScanner"
-          placeholder="Apunte la pistola al código de barras o escríbalo aquí..."
-          autocomplete="off"
-          autofocus
-        >
-        <button class="btn-scan-submit" id="btnScanSearch">Buscar / Añadir</button>
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar">👤</div>
+          <div class="user-info">
+            <strong id="sidebarUsername">Administrador</strong>
+            <small>Caja Principal 01</small>
+          </div>
+        </div>
       </div>
-      <div class="scanner-hint">
-        💡 <strong>Pistola USB activa</strong> — La lectura del escáner se captura automáticamente en este campo
+    </aside>
+
+    <!-- ==================== ÁREA PRINCIPAL ==================== -->
+    <div class="app-main-workspace">
+
+      <!-- TOPBAR SUPERIOR -->
+      <header class="app-topbar">
+        <div class="topbar-left">
+          <button class="topbar-menu-btn" id="btnTopbarMenu" title="Ocultar / Mostrar Barra Lateral">☰</button>
+          <div class="device-status">
+            <!-- 1. Escáner USB / Barcode -->
+            <div class="device-indicator" id="scannerStatus" title="Escáner USB de Código de Barras: LISTO">
+              <span class="status-dot dot-green"></span>
+              <svg class="device-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 5v4"/>
+                <path d="M21 5v4"/>
+                <path d="M3 19v-4"/>
+                <path d="M21 19v-4"/>
+                <path d="M7 5v14"/>
+                <path d="M10 5v14"/>
+                <path d="M14 5v14"/>
+                <path d="M17 5v14"/>
+              </svg>
+            </div>
+
+            <!-- 2. Impresora Térmica -->
+            <button type="button" class="device-indicator device-btn" id="btnOpenPrinterConfig" title="Impresora Térmica: Conectada y Lista (Clic para configurar)">
+              <span class="status-dot dot-green"></span>
+              <svg class="device-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+              </svg>
+            </button>
+
+            <!-- 3. SUNAT Cloud Check -->
+            <div class="device-indicator" id="sunatStatusPill" title="SUNAT Facturación Electrónica BVE: Conectado y LISTO">
+              <span class="status-dot dot-green"></span>
+              <svg class="device-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                <polyline points="9 13 12 16 16 11"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="clock-badge" id="liveClock">--:-- --</div>
+        </div>
+      </header>
+
+      <!-- BARRA 1: ESCÁNER PISTOLA USB (AÑADIR DIRECTO AL TICKET) -->
+      <div class="scanner-bar">
+        <div class="scanner-input-wrapper">
+          <span class="scanner-field-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 5v4"/>
+              <path d="M21 5v4"/>
+              <path d="M3 19v-4"/>
+              <path d="M21 19v-4"/>
+              <path d="M7 5v14"/>
+              <path d="M10 5v14"/>
+              <path d="M14 5v14"/>
+              <path d="M17 5v14"/>
+            </svg>
+          </span>
+          <input
+            type="text"
+            id="globalBarcodeScanner"
+            placeholder="Dispare con la pistola o escriba el código de barras / SKU para AÑADIR DIRECTO al ticket..."
+            autocomplete="off"
+            autofocus
+          >
+          <button class="btn-scan-submit" id="btnScanSearch">+ Añadir al Ticket</button>
+        </div>
       </div>
-    </div>
 
-    <!-- ==================== MAIN CONTENT ==================== -->
-    <main class="main-content">
+      <!-- CONTENIDO PRINCIPAL (TABS) -->
+      <main class="main-content">
 
-      <!-- ========== TAB 1: PUNTO DE VENTA (POS) ========== -->
-      <section class="tab-pane active" id="posTab">
-        <div class="pos-layout">
+        <!-- ========== TAB 1: PUNTO DE VENTA (POS) ========== -->
+        <section class="tab-pane active" id="posTab">
+          <div class="pos-layout">
 
-          <!-- PANEL IZQUIERDO: CATÁLOGO DE PRODUCTOS -->
-          <div class="pos-products-panel">
-            <div class="panel-header">
-              <h3>Catálogo de Productos</h3>
-              <div class="filter-controls">
-                <input type="text" id="posSearchInput" placeholder="Filtrar productos..." class="input-sm">
-                <select id="posCategoryFilter" class="select-sm">
-                  <option value="">Todas las Categorías</option>
-                </select>
-                <div class="view-toggle">
-                  <button class="view-btn active" id="btnGridView" title="Vista en cuadrícula">⊞</button>
-                  <button class="view-btn" id="btnListView" title="Vista en lista">≡</button>
+            <!-- PANEL IZQUIERDO: CATÁLOGO DE PRODUCTOS -->
+            <div class="pos-products-panel">
+              <div class="panel-header">
+                <div class="catalog-title-group">
+                  <h3>Catálogo de Productos</h3>
+                  <span class="catalog-subtitle">Explora y filtra inventario</span>
+                </div>
+                <!-- BARRA 2: FILTRAR VISUALMENTE LA TABLA -->
+                <div class="filter-controls">
+                  <div class="filter-input-wrapper">
+                    <span class="filter-icon">🔍</span>
+                    <input type="text" id="posSearchInput" placeholder="Filtrar tabla por nombre..." class="input-sm">
+                    <button class="btn-filter-clear" id="btnFilterClearInput" title="Limpiar filtro">✕</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PESTAÑAS DE MODO: PRODUCTOS FRECUENTES (PREDETERMINADO) vs CATÁLOGO COMPLETO -->
+              <div class="pos-catalog-mode-tabs">
+                <button type="button" class="catalog-mode-btn active" id="btnModeFrequent" data-mode="frequent">
+                  <span class="mode-icon">⭐</span>
+                  <span class="mode-text">Productos Frecuentes</span>
+                  <span class="mode-badge">Más Vendidos</span>
+                </button>
+                <button type="button" class="catalog-mode-btn" id="btnModeAll" data-mode="all">
+                  <span class="mode-icon">📦</span>
+                  <span class="mode-text">Catálogo Completo</span>
+                  <span class="mode-badge">Todos</span>
+                </button>
+              </div>
+
+              <!-- BARRA DE CHIPS DE CATEGORÍAS -->
+              <div class="category-chips-wrapper" id="categoryChipsWrapper" style="display:none;">
+                <div class="category-chips" id="categoryChips">
+                  <button class="cat-chip active" data-cat="">⚡ Todos</button>
+                </div>
+              </div>
+
+              <!-- VISTA ÚNICA: LISTA COMPACTA DE ALTA DENSIDAD -->
+              <div class="pos-list-view-container" id="posListView">
+                <table class="pos-compact-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 36px; text-align: center;" title="Fijar como Producto Frecuente">⭐</th>
+                      <th style="width: 140px;">Código / SKU</th>
+                      <th>Producto</th>
+                      <th style="width: 160px;">Categoría / Marca</th>
+                      <th style="width: 110px;">Stock</th>
+                      <th style="width: 110px; text-align: right;">P. Venta</th>
+                      <th style="width: 60px; text-align: center;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="posProductTableBody">
+                    <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando catálogo...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- TECLADO TÁCTIL POS (TAMAÑO FLEXIBLE / RESIZABLE) -->
+              <div class="pos-speed-panel" id="posSpeedPanel">
+                <!-- TIRADOR SUPERIOR PARA ARRASTRAR Y CAMBIAR ALTURA -->
+                <div class="panel-resizer-grip" id="keyboardResizerHandle" title="Arrastra hacia arriba o abajo para cambiar la altura del teclado">
+                  <span class="grip-line"></span>
+                </div>
+
+                <!-- BARRA CABECERA ÚNICA DEL PANEL (SOLO BOTÓN LIMPIAR BÚSQUEDA) -->
+                <div class="speed-panel-header" style="justify-content: flex-end; padding: 3px 8px;">
+                  <button type="button" class="btn-clear-search-key" id="btnClearSearchKey" title="Borrar texto de búsqueda">
+                    <span>✕</span> Limpiar Búsqueda
+                  </button>
+                </div>
+
+                <!-- CUERPO EXPANDIBLE CON ALTURA FLEXIBLE -->
+                <div class="speed-panel-body" id="speedPanelBody">
+                  <!-- TECLADO COMPLETO PARA ESCRIBIR / BUSCAR (QWERTY VIRTUAL TÁCTIL) -->
+                  <div class="keyboard-section qwerty-section">
+                    <div class="qwerty-grid">
+                      <!-- Fila 1: Letras Q a P -->
+                      <div class="qwerty-row">
+                        <button type="button" class="q-key" data-char="Q">Q</button>
+                        <button type="button" class="q-key" data-char="W">W</button>
+                        <button type="button" class="q-key" data-char="E">E</button>
+                        <button type="button" class="q-key" data-char="R">R</button>
+                        <button type="button" class="q-key" data-char="T">T</button>
+                        <button type="button" class="q-key" data-char="Y">Y</button>
+                        <button type="button" class="q-key" data-char="U">U</button>
+                        <button type="button" class="q-key" data-char="I">I</button>
+                        <button type="button" class="q-key" data-char="O">O</button>
+                        <button type="button" class="q-key" data-char="P">P</button>
+                      </div>
+                      <!-- Fila 2: Letras A a Ñ -->
+                      <div class="qwerty-row">
+                        <button type="button" class="q-key" data-char="A">A</button>
+                        <button type="button" class="q-key" data-char="S">S</button>
+                        <button type="button" class="q-key" data-char="D">D</button>
+                        <button type="button" class="q-key" data-char="F">F</button>
+                        <button type="button" class="q-key" data-char="G">G</button>
+                        <button type="button" class="q-key" data-char="H">H</button>
+                        <button type="button" class="q-key" data-char="J">J</button>
+                        <button type="button" class="q-key" data-char="K">K</button>
+                        <button type="button" class="q-key" data-char="L">L</button>
+                        <button type="button" class="q-key" data-char="Ñ">Ñ</button>
+                      </div>
+                      <!-- Fila 3: Letras Z a M + Borrar (Sin emojis) -->
+                      <div class="qwerty-row">
+                        <button type="button" class="q-key" data-char="Z">Z</button>
+                        <button type="button" class="q-key" data-char="X">X</button>
+                        <button type="button" class="q-key" data-char="C">C</button>
+                        <button type="button" class="q-key" data-char="V">V</button>
+                        <button type="button" class="q-key" data-char="B">B</button>
+                        <button type="button" class="q-key" data-char="N">N</button>
+                        <button type="button" class="q-key" data-char="M">M</button>
+                        <button type="button" class="q-key q-key-backspace" id="btnQwertyBackspace">Borrar</button>
+                      </div>
+                      <!-- Fila 4: Espacio + Filtrar Tabla (Sin emojis) -->
+                      <div class="qwerty-row">
+                        <button type="button" class="q-key q-key-space" id="btnQwertySpace">ESPACIO</button>
+                        <button type="button" class="q-key q-key-enter" id="btnQwertySearch">Filtrar Tabla</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- PANEL DERECHO: TICKET / CARRITO -->
+            <div class="pos-cart-panel">
+
+              <!-- TIPO DE COMPROBANTE -->
+              <div class="document-type-selector">
+                <button class="doc-type-btn active" data-type="03" id="dtBoleta">
+                  <span class="doc-icon">📄</span>
+                  <span class="doc-label">Boleta<br><small>B001</small></span>
+                </button>
+                <button class="doc-type-btn" data-type="01" id="dtFactura">
+                  <span class="doc-icon">📋</span>
+                  <span class="doc-label">Factura<br><small>F001</small></span>
+                </button>
+                <button class="doc-type-btn" data-type="00" id="dtTicket">
+                  <span class="doc-icon">🧾</span>
+                  <span class="doc-label">Ticket<br><small>Interno</small></span>
+                </button>
+              </div>
+
+              <div class="cart-header">
+                <h3>Ticket Actual</h3>
+                <span class="cart-badge" id="cartItemsCount">0 ítems</span>
+              </div>
+
+              <div class="cart-table-wrapper">
+                <table class="cart-table">
+                  <thead>
+                    <tr>
+                      <th>Cant./Peso</th>
+                      <th>Producto</th>
+                      <th>P.Unit</th>
+                      <th>Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="cartTableBody">
+                    <tr class="empty-cart-row">
+                      <td colspan="5">
+                        <div class="empty-cart-state">
+                          <span class="empty-icon">🛒</span>
+                          <p>Escanee un código de barras<br>o haga clic en un producto</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- TOTALES -->
+              <div class="cart-summary">
+                <div class="summary-row">
+                  <span>Op. Gravada (sin IGV)</span>
+                  <span id="cartSubtotalGravada">S/. 0.00</span>
+                </div>
+                <div class="summary-row">
+                  <span>IGV (18%)</span>
+                  <span id="cartIgv">S/. 0.00</span>
+                </div>
+                <div class="summary-row total-row">
+                  <span>TOTAL A PAGAR</span>
+                  <span id="cartTotal">S/. 0.00</span>
+                </div>
+
+                <div class="cash-hint">
+                  Al presionar <strong>COBRAR</strong> se pedirá la forma de pago
+                </div>
+
+                <!-- ACCIONES DE CARRITO -->
+                <div class="cart-actions">
+                  <button class="btn-danger btn-outline" id="btnClearCart" title="Vaciar carrito">
+                    🗑️ Vaciar
+                  </button>
+                  <button class="btn-success btn-lg" id="btnCheckout">
+                    🖨️ PROCESAR E IMPRIMIR
+                    <span class="sunat-label" id="sunatLabelBtn">BVE SUNAT</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== TAB 2: CLIENTES Y FIADOS ========== -->
+        <section class="tab-pane" id="customersTab">
+          <div class="section-container">
+            <div class="section-bar">
+              <div class="section-title">
+                <h2>Fiados por Persona</h2>
+                <p class="section-subtitle">Cada cliente tiene su propio registro de deuda, historial de compras fiadas y abonos</p>
+              </div>
+              <button class="btn-primary" id="btnOpenCustomerModal">
+                ➕ Nuevo Cliente
+              </button>
+            </div>
+
+            <!-- TARJETAS DE RESUMEN FIADOS -->
+            <div class="summary-cards" id="fiadoSummaryCards">
+              <div class="summary-card danger-card">
+                <span class="card-icon">⚠️</span>
+                <div>
+                  <span class="card-label">Clientes con Deuda</span>
+                  <strong class="card-value" id="statsDebtors">0 clientes</strong>
+                </div>
+              </div>
+              <div class="summary-card warning-card">
+                <span class="card-icon">💰</span>
+                <div>
+                  <span class="card-label">Total Deuda Fiados</span>
+                  <strong class="card-value" id="statsTotalDebt">S/. 0.00</strong>
+                </div>
+              </div>
+              <div class="summary-card success-card">
+                <span class="card-icon">✅</span>
+                <div>
+                  <span class="card-label">Clientes al Día</span>
+                  <strong class="card-value" id="statsGoodStanding">0 clientes</strong>
                 </div>
               </div>
             </div>
 
-            <div class="product-grid" id="productGrid">
-              <div class="loading-state">
-                <span class="loading-spinner">⟳</span>
-                <p>Cargando catálogo...</p>
-              </div>
+            <!-- GRID DE TARJETAS POR CLIENTE -->
+            <div class="fiado-grid" id="fiadoCustomerGrid">
+              <!-- Renderizado dinámicamente por JS -->
             </div>
           </div>
+        </section>
 
-          <!-- PANEL DERECHO: TICKET / CARRITO -->
-          <div class="pos-cart-panel">
-
-            <!-- TIPO DE COMPROBANTE (BVE/FACTURA/TICKET) -->
-            <div class="document-type-selector">
-              <button class="doc-type-btn active" data-type="03" id="dtBoleta">
-                <span class="doc-icon">📄</span>
-                <span class="doc-label">Boleta<br><small>B001</small></span>
-              </button>
-              <button class="doc-type-btn" data-type="01" id="dtFactura">
-                <span class="doc-icon">📋</span>
-                <span class="doc-label">Factura<br><small>F001</small></span>
-              </button>
-              <button class="doc-type-btn" data-type="00" id="dtTicket">
-                <span class="doc-icon">🧾</span>
-                <span class="doc-label">Ticket<br><small>Interno</small></span>
-              </button>
+        <!-- ========== TAB 3: INVENTARIO ========== -->
+        <section class="tab-pane" id="inventoryTab">
+          <div class="section-container">
+            <div class="section-bar">
+              <div class="section-title">
+                <h2>Gestión de Inventario y Productos</h2>
+                <p class="section-subtitle">Productos por unidad y pesables con control de stock automático</p>
+              </div>
+              <div class="button-group" style="display:flex; gap:8px;">
+                <button class="btn-primary" style="background-color:var(--success);" id="btnOpenImportCsvModal">
+                  📥 Importar CSV / Sheets
+                </button>
+                <button class="btn-primary" id="btnOpenProductModal">
+                  ➕ Nuevo Producto
+                </button>
+              </div>
             </div>
 
-            <div class="cart-header">
-              <h3>Ticket Actual</h3>
-              <span class="cart-badge" id="cartItemsCount">0 ítems</span>
+            <!-- ALERTAS DE STOCK BAJO (REDESISEÑADO PROTASK PREMIUM) -->
+            <div class="stock-alert-card" id="lowStockAlertBanner" style="display:none;">
+              <div class="stock-alert-left">
+                <div class="stock-alert-icon-wrap">
+                  <span class="stock-alert-pulse"></span>
+                  <span class="stock-alert-icon">⚠️</span>
+                </div>
+                <div class="stock-alert-info">
+                  <div class="stock-alert-title-row">
+                    <strong class="stock-alert-title">Alerta de Control de Stock Crítico</strong>
+                    <span class="stock-alert-badge" id="stockAlertBadgeCount">0 Críticos</span>
+                  </div>
+                  <p class="stock-alert-desc" id="lowStockAlertText">Cargando alertas de stock...</p>
+                </div>
+              </div>
+              <div class="stock-alert-actions">
+                <div class="stock-filter-pills" id="stockFilterPills">
+                  <button type="button" class="btn-stock-pill" id="btnFilterAllStock">
+                    📋 Todos (<span id="countAllStock">0</span>)
+                  </button>
+                  <button type="button" class="btn-stock-pill pill-warning" id="btnViewLowStock">
+                    ⚠️ Stock Bajo / Agotado (<span id="countLowStock">0</span>)
+                  </button>
+                  <button type="button" class="btn-stock-pill pill-danger" id="btnFilterZeroStock">
+                    🚨 Agotados (0) (<span id="countZeroStock">0</span>)
+                  </button>
+                </div>
+                <button type="button" class="btn-supplier-order" id="btnGeneratePurchaseList" title="Generar lista / pedido de compras para reposición">
+                  📝 Pedido a Proveedor
+                </button>
+              </div>
             </div>
 
-            <div class="cart-table-wrapper">
-              <table class="cart-table">
+            <!-- BARRA DE BÚSQUEDA Y FILTROS DE INVENTARIO -->
+            <div class="inventory-toolbar-card">
+              <div class="inv-search-input-wrap">
+                <span class="inv-search-icon">🔍</span>
+                <input type="text" id="inventorySearchInput" placeholder="Buscar por producto, código de barras o marca..." autocomplete="off">
+                <button type="button" id="btnInventorySearchClear" class="btn-inv-search-clear" style="display:none;" title="Limpiar búsqueda">&times;</button>
+              </div>
+              <div class="inv-filter-controls">
+                <select id="inventoryCategoryFilter" class="select-sm inv-cat-select">
+                  <option value="">📁 Todas las Categorías</option>
+                </select>
+                <div class="inv-active-filter-indicator" id="inventoryFilterStatusBadge" style="display:none;">
+                  <span class="indicator-dot"></span>
+                  <span id="inventoryFilterStatusText">Filtro activo: Stock Bajo</span>
+                  <button type="button" id="btnResetInventoryFilter" class="btn-clear-active-filter" title="Restablecer vista a todos los productos">&times;</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-card">
+              <table class="data-table" id="inventoryTable">
                 <thead>
                   <tr>
-                    <th>Cant./Peso</th>
-                    <th>Producto</th>
-                    <th>P.Unit</th>
-                    <th>Total</th>
-                    <th></th>
+                    <th>#</th>
+                    <th>Código / SKU</th>
+                    <th>Nombre del Producto</th>
+                    <th>Tipo / Unidad</th>
+                    <th>P. Compra</th>
+                    <th>P. Venta</th>
+                    <th>Stock</th>
+                    <th>Min. Stock</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
-                <tbody id="cartTableBody">
-                  <tr class="empty-cart-row">
-                    <td colspan="5">
-                      <div class="empty-cart-state">
-                        <span class="empty-icon">🛒</span>
-                        <p>Escanee un código de barras<br>o haga clic en un producto</p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
+                <tbody id="inventoryTableBody"></tbody>
               </table>
             </div>
-
-            <!-- TOTALES -->
-            <div class="cart-summary">
-              <div class="summary-row">
-                <span>Op. Gravada (sin IGV)</span>
-                <span id="cartSubtotalGravada">$0.00</span>
-              </div>
-              <div class="summary-row">
-                <span>IGV (18%)</span>
-                <span id="cartIgv">$0.00</span>
-              </div>
-              <div class="summary-row total-row">
-                <span>TOTAL A PAGAR</span>
-                <span id="cartTotal">$0.00</span>
-              </div>
-
-              <!-- CALCULADORA DE EFECTIVO (siempre visible para referencia) -->
-              <div class="cash-hint">
-                Al presionar <strong>COBRAR</strong> se pedirá la forma de pago
-              </div>
-
-              <!-- BOTONES DE ACCIÓN -->
-              <div class="cart-actions">
-                <button class="btn-danger btn-outline" id="btnClearCart" title="Vaciar carrito">
-                  🗑️ Vaciar
-                </button>
-                <button class="btn-success btn-lg" id="btnCheckout">
-                  🖨️ PROCESAR E IMPRIMIR
-                  <span class="sunat-label" id="sunatLabelBtn">BVE SUNAT</span>
-                </button>
-              </div>
-            </div>
-
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- ========== TAB 2: CLIENTES Y FIADOS ========== -->
-      <section class="tab-pane" id="customersTab">
-        <div class="section-container">
-          <div class="section-bar">
-            <div class="section-title">
-              <h2>Fiados por Persona</h2>
-              <p class="section-subtitle">Cada cliente tiene su propio registro de deuda, historial de compras fiadas y abonos</p>
-            </div>
-            <button class="btn-primary" id="btnOpenCustomerModal">
-              ➕ Nuevo Cliente
-            </button>
-          </div>
-
-          <!-- TARJETAS DE RESUMEN FIADOS -->
-          <div class="summary-cards" id="fiadoSummaryCards">
-            <div class="summary-card danger-card">
-              <span class="card-icon">⚠️</span>
-              <div>
-                <span class="card-label">Clientes con Deuda</span>
-                <strong class="card-value" id="statsDebtors">—</strong>
+        <!-- ========== TAB 4: SUNAT BVE ========== -->
+        <section class="tab-pane" id="sunatTab">
+          <div class="section-container">
+            <div class="section-bar">
+              <div class="section-title">
+                <h2>Facturación Electrónica SUNAT (BVE)</h2>
+                <p class="section-subtitle">Boletas de Venta Electrónicas y Facturas — Sincronización Híbrida Offline/Online</p>
               </div>
-            </div>
-            <div class="summary-card warning-card">
-              <span class="card-icon">💰</span>
-              <div>
-                <span class="card-label">Total Deuda Fiados</span>
-                <strong class="card-value" id="statsTotalDebt">—</strong>
-              </div>
-            </div>
-            <div class="summary-card success-card">
-              <span class="card-icon">✅</span>
-              <div>
-                <span class="card-label">Clientes al Día</span>
-                <strong class="card-value" id="statsGoodStanding">—</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- GRID DE TARJETAS POR CLIENTE -->
-          <div class="fiado-grid" id="fiadoCustomerGrid">
-            <!-- Renderizado por JS -->
-          </div>
-        </div>
-      </section>
-
-      <!-- ========== TAB 3: INVENTARIO (CRUD PRODUCTOS) ========== -->
-      <section class="tab-pane" id="inventoryTab">
-        <div class="section-container">
-          <div class="section-bar">
-            <div class="section-title">
-              <h2>Gestión de Inventario y Productos</h2>
-              <p class="section-subtitle">Productos por unidad y crudos/a granel con control de stock automático</p>
-            </div>
-            <div class="button-group" style="display:flex; gap:8px;">
-              <button class="btn-primary" style="background-color:var(--success);" id="btnOpenImportCsvModal">
-                📥 Importar CSV / Sheets
-              </button>
-              <button class="btn-primary" id="btnOpenProductModal">
-                ➕ Nuevo Producto
+              <button class="btn-primary sunat-sync-btn" id="btnSyncSunat">
+                🔄 Sincronizar con SUNAT
               </button>
             </div>
-          </div>
 
-          <!-- ALERTAS DE STOCK BAJO -->
-          <div class="alert-banner" id="lowStockAlertBanner" style="display:none;">
-            <span class="alert-icon">🔴</span>
-            <span id="lowStockAlertText">Cargando alertas de stock...</span>
-            <button class="btn-sm btn-warning" id="btnViewLowStock">Ver Todos</button>
-          </div>
-
-          <div class="table-card">
-            <table class="data-table" id="inventoryTable">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Código de Barras</th>
-                  <th>Nombre del Producto</th>
-                  <th>Tipo / Unidad</th>
-                  <th>P. Compra</th>
-                  <th>P. Venta</th>
-                  <th>Stock</th>
-                  <th>Min. Stock</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="inventoryTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========== TAB 4: SUNAT BVE - FACTURACIÓN ELECTRÓNICA ========== -->
-      <section class="tab-pane" id="sunatTab">
-        <div class="section-container">
-          <div class="section-bar">
-            <div class="section-title">
-              <h2>Facturación Electrónica SUNAT (BVE)</h2>
-              <p class="section-subtitle">Boletas de Venta Electrónicas y Facturas — Sincronización Híbrida Offline/Online</p>
-            </div>
-            <button class="btn-primary sunat-sync-btn" id="btnSyncSunat">
-              🔄 Sincronizar con SUNAT
-            </button>
-          </div>
-
-          <!-- PANEL DE INFORMACIÓN SUNAT -->
-          <div class="sunat-info-grid">
-            <div class="sunat-info-card">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <h4>📋 Configuración del Emisor</h4>
-                <button class="btn-primary btn-sm" id="btnOpenEditTemplatesSunat">✏️ Editar Plantillas</button>
-              </div>
-              <div class="info-rows" id="sunatConfigPanel">
-                <div class="info-row"><span>RUC:</span> <strong id="cfgRuc">—</strong></div>
-                <div class="info-row"><span>Razón Social:</span> <strong id="cfgRazonSocial">—</strong></div>
-                <div class="info-row"><span>Nombre Comercial:</span> <strong id="cfgNombreComercial">—</strong></div>
-                <div class="info-row"><span>Dirección:</span> <strong id="cfgDireccion">—</strong></div>
-                <div class="info-row"><span>Ambiente:</span> <strong id="cfgAmbiente" style="color:var(--warning)">—</strong></div>
-              </div>
-            </div>
-
-            <div class="sunat-stats-cards">
-              <div class="sunat-stat-card pending-card">
-                <span class="stat-num" id="sunatStatPending">0</span>
-                <span class="stat-label">⏳ PENDIENTES</span>
-              </div>
-              <div class="sunat-stat-card accepted-card">
-                <span class="stat-num" id="sunatStatAccepted">0</span>
-                <span class="stat-label">✅ ACEPTADOS</span>
-              </div>
-              <div class="sunat-stat-card rejected-card">
-                <span class="stat-num" id="sunatStatRejected">0</span>
-                <span class="stat-label">❌ RECHAZADOS</span>
-              </div>
-            </div>
-
-            <!-- EXPLICACIÓN DEL MODO HÍBRIDO -->
-            <div class="sunat-hybrid-card">
-              <h4>⚡ Arquitectura Híbrida SUNAT</h4>
-              <div class="hybrid-steps">
-                <div class="hybrid-step">
-                  <span class="step-num">1</span>
-                  <div class="step-body">
-                    <strong>Venta en Caja (Sin Internet)</strong>
-                    <p>Genera la serie B001-00000001, calcula IGV 18%, imprime el ticket de 58mm e inserta la BVE en SQLite con estado <span class="badge-pending">PENDIENTE</span>. Nunca se detiene la caja.</p>
-                  </div>
+            <!-- PANEL DE INFORMACIÓN SUNAT -->
+            <div class="sunat-info-grid">
+              <div class="sunat-info-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <h4>📋 Configuración del Emisor</h4>
+                  <button class="btn-primary btn-sm" id="btnOpenEditTemplatesSunat">✏️ Editar Plantillas</button>
                 </div>
-                <div class="hybrid-step">
-                  <span class="step-num">2</span>
-                  <div class="step-body">
-                    <strong>Sincronización a SUNAT (Con Internet)</strong>
-                    <p>Cuando haya internet, presione "Sincronizar con SUNAT". Se envía el lote de BVEs pendientes al Web Service SUNAT/OSE y se actualizan a <span class="badge-accepted">ACEPTADO</span> con el CDR.</p>
-                  </div>
+                <div class="info-rows" id="sunatConfigPanel">
+                  <div class="info-row"><span>RUC:</span> <strong id="cfgRuc">—</strong></div>
+                  <div class="info-row"><span>Razón Social:</span> <strong id="cfgRazonSocial">—</strong></div>
+                  <div class="info-row"><span>Nombre Comercial:</span> <strong id="cfgNombreComercial">—</strong></div>
+                  <div class="info-row"><span>Dirección:</span> <strong id="cfgDireccion">—</strong></div>
+                  <div class="info-row"><span>Ambiente:</span> <strong id="cfgAmbiente" style="color:var(--warning)">—</strong></div>
                 </div>
-                <div class="hybrid-step">
-                  <span class="step-num">3</span>
-                  <div class="step-body">
-                    <strong>Plazo de Gracia SUNAT</strong>
-                    <p>SUNAT permite hasta <strong>3 días calendario</strong> para enviar los comprobantes emitidos en contingencia u offline, sin multas ni observaciones.</p>
+              </div>
+
+              <div class="sunat-stats-cards">
+                <div class="sunat-stat-card pending-card">
+                  <span class="stat-num" id="sunatStatPending">0</span>
+                  <span class="stat-label">⏳ PENDIENTES</span>
+                </div>
+                <div class="sunat-stat-card accepted-card">
+                  <span class="stat-num" id="sunatStatAccepted">0</span>
+                  <span class="stat-label">✅ ACEPTADOS</span>
+                </div>
+                <div class="sunat-stat-card rejected-card">
+                  <span class="stat-num" id="sunatStatRejected">0</span>
+                  <span class="stat-label">❌ RECHAZADOS</span>
+                </div>
+              </div>
+
+              <div class="sunat-hybrid-card">
+                <h4>⚡ Arquitectura Híbrida SUNAT</h4>
+                <div class="hybrid-steps">
+                  <div class="hybrid-step">
+                    <span class="step-num">1</span>
+                    <div class="step-body">
+                      <strong>Venta en Caja (Sin Internet)</strong>
+                      <p>Genera la serie B001, calcula IGV 18%, imprime ticket 58mm y guarda en SQLite con estado PENDIENTE.</p>
+                    </div>
+                  </div>
+                  <div class="hybrid-step">
+                    <span class="step-num">2</span>
+                    <div class="step-body">
+                      <strong>Sincronización a SUNAT</strong>
+                      <p>Al tener conexión, se envían las boletas pendientes y se actualizan a ACEPTADO con su CDR oficial.</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- TABLA DE COMPROBANTES ELECTRÓNICOS -->
-          <div class="table-card" style="margin-top: 16px;">
-            <div class="table-header-bar">
-              <h4>Registro de Comprobantes Electrónicos</h4>
-              <div class="filter-controls">
-                <select id="sunatFilterStatus" class="select-sm">
-                  <option value="">Todos los Estados</option>
-                  <option value="PENDIENTE">⏳ Pendiente</option>
-                  <option value="ACEPTADO">✅ Aceptado</option>
-                  <option value="RECHAZADO">❌ Rechazado</option>
-                </select>
+            <!-- REGISTRO DE COMPROBANTES -->
+            <div class="table-card" style="margin-top: 16px;">
+              <div class="table-header-bar">
+                <h4>Registro de Comprobantes Electrónicos</h4>
+                <div class="filter-controls">
+                  <select id="sunatFilterStatus" class="select-sm">
+                    <option value="">Todos los Estados</option>
+                    <option value="PENDIENTE">⏳ Pendiente</option>
+                    <option value="ACEPTADO">✅ Aceptado</option>
+                    <option value="RECHAZADO">❌ Rechazado</option>
+                  </select>
+                </div>
+              </div>
+              <table class="data-table" id="sunatTable">
+                <thead>
+                  <tr>
+                    <th>Serie-Número</th>
+                    <th>Tipo</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>IGV</th>
+                    <th>Estado SUNAT</th>
+                    <th>Ticket 58mm</th>
+                  </tr>
+                </thead>
+                <tbody id="sunatTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== TAB 5: CATEGORÍAS ========== -->
+        <section class="tab-pane" id="categoriesTab">
+          <div class="section-container">
+            <div class="section-bar">
+              <div class="section-title">
+                <h2>Categorías de Productos</h2>
+                <p class="section-subtitle">Organice sus productos en categorías para el punto de venta</p>
+              </div>
+              <button class="btn-primary" id="btnOpenCategoryModal">
+                ➕ Nueva Categoría
+              </button>
+            </div>
+
+            <div class="table-card">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="categoriesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== TAB 6: HISTORIAL DE VENTAS ========== -->
+        <section class="tab-pane" id="salesHistoryTab">
+          <div class="section-container">
+            <div class="section-bar">
+              <div class="section-title">
+                <h2>Historial de Ventas y Comprobantes</h2>
+                <p class="section-subtitle">Consulte todas las ventas realizadas y reimprima tickets de caja</p>
               </div>
             </div>
-            <table class="data-table" id="sunatTable">
-              <thead>
-                <tr>
-                  <th>Serie-Número</th>
-                  <th>Tipo</th>
-                  <th>Fecha</th>
-                  <th>Cliente</th>
-                  <th>Total</th>
-                  <th>IGV</th>
-                  <th>Estado SUNAT</th>
-                  <th>CDR</th>
-                  <th>Ticket</th>
-                </tr>
-              </thead>
-              <tbody id="sunatTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
 
-      <!-- ========== TAB 5: CATEGORÍAS ========== -->
-      <section class="tab-pane" id="categoriesTab">
-        <div class="section-container">
-          <div class="section-bar">
-            <div class="section-title">
-              <h2>Categorías de Productos</h2>
-            </div>
-            <button class="btn-primary" id="btnOpenCategoryModal">
-              ➕ Nueva Categoría
-            </button>
-          </div>
-
-          <div class="table-card">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="categoriesTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========== TAB 6: HISTORIAL DE VENTAS ========== -->
-      <section class="tab-pane" id="salesHistoryTab">
-        <div class="section-container">
-          <div class="section-bar">
-            <div class="section-title">
-              <h2>Historial de Ventas y Comprobantes Emitidos</h2>
+            <div class="table-card">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Comprobante</th>
+                    <th>Tipo SUNAT</th>
+                    <th>Fecha / Hora</th>
+                    <th>Cliente</th>
+                    <th>Forma Pago</th>
+                    <th>Total</th>
+                    <th>Estado SUNAT</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="salesHistoryBody"></tbody>
+              </table>
             </div>
           </div>
+        </section>
 
-          <div class="table-card">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Comprobante</th>
-                  <th>Tipo SUNAT</th>
-                  <th>Fecha / Hora</th>
-                  <th>Cliente</th>
-                  <th>Cajero</th>
-                  <th>Forma Pago</th>
-                  <th>Total</th>
-                  <th>Estado SUNAT</th>
-                  <th>Ticket 58mm</th>
-                </tr>
-              </thead>
-              <tbody id="salesHistoryBody"></tbody>
-            </table>
+        <!-- ========== TAB 7: CONFIGURACIÓN GENERAL Y HARDWARE ========== -->
+        <section class="tab-pane" id="settingsTab">
+          <div class="section-container">
+            <div class="section-bar">
+              <div class="section-title">
+                <h2>⚙️ Configuración del Sistema</h2>
+                <p class="section-subtitle">Gestione impresoras térmicas, datos de la empresa, emisor SUNAT y hardware POS</p>
+              </div>
+            </div>
+
+            <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px;">
+              
+              <!-- TARJETA 1: CONFIGURACIÓN DE IMPRESORA TÉRMICA -->
+              <div class="card" id="cardPrinterConfig" style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:24px;">🖨️</span>
+                    <div>
+                      <h3 style="font-size:15px; font-weight:700; color:var(--text-main); margin:0;">Impresora Térmica de Tickets</h3>
+                      <small style="color:var(--text-muted);">Sincronización y controladores Windows / USB</small>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-secondary btn-sm" id="btnSettingsRefreshPrinters">
+                    🔄 Buscar
+                  </button>
+                </div>
+
+                <div class="printer-status-box" style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius-md); margin-bottom: 16px;">
+                  <span class="dot" style="background:#16a34a; width:8px; height:8px; border-radius:50%;"></span>
+                  <div style="flex:1;">
+                    <strong style="color: #166534; font-size: 13px; display: block;" id="settingsPrinterStatusTitle">Impresora Lista</strong>
+                    <small style="color: #15803d;" id="settingsPrinterStatusSubtitle">Detectando puertos USB y controladores...</small>
+                  </div>
+                </div>
+
+                <form id="formSettingsPrinter">
+                  <div class="form-group" style="margin-bottom: 14px;">
+                    <label style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:6px; display:block;">Impresora de Windows Seleccionada:</label>
+                    <select id="settingsSelectPrinterDevice" class="select-full">
+                      <option value="">Cargando impresoras...</option>
+                    </select>
+                  </div>
+
+                  <div class="form-grid col-2" style="margin-bottom: 14px;">
+                    <div class="form-group">
+                      <label style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:6px; display:block;">Ancho del Rollo:</label>
+                      <select id="settingsPrinterPaperWidth" class="select-full">
+                        <option value="58" selected>58 mm (Estándar Punto de Venta)</option>
+                        <option value="80">80 mm (Ticket Ancho)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:6px; display:block;">Modo de Envío:</label>
+                      <select id="settingsPrinterPrintMode" class="select-full">
+                        <option value="direct" selected>⚡ Directo ESC/POS (Rápido)</option>
+                        <option value="dialog">📄 Diálogo de Impresión</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:16px;">
+                    <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Parámetros de Caja y Hardware</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px;">
+                      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="settingsChkPrintOnSale" checked>
+                        <span>🖨️ Imprimir ticket al confirmar cobro</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn-secondary" id="btnSettingsTestPrinter" style="flex:1;">
+                      📄 Imprimir Prueba
+                    </button>
+                    <button type="submit" class="btn-success" style="flex:1;">
+                      💾 Guardar Impresora
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- TARJETA 2: DATOS DEL EMISOR Y SUNAT BVE -->
+              <div class="card" style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                  <span style="font-size:24px;">🏢</span>
+                  <div>
+                    <h3 style="font-size:15px; font-weight:700; color:var(--text-main); margin:0;">Datos de la Empresa y SUNAT</h3>
+                    <small style="color:var(--text-muted);">Encabezado de tickets y facturación electrónica</small>
+                  </div>
+                </div>
+
+                <form id="formSettingsSunat">
+                  <div class="form-grid col-2" style="margin-bottom:12px;">
+                    <div class="form-group">
+                      <label style="font-size:12px; font-weight:700; margin-bottom:6px; display:block;">RUC de la Empresa:</label>
+                      <input type="text" id="settingsSunatRuc" placeholder="20601234567" value="20601234567" maxlength="11">
+                    </div>
+                    <div class="form-group">
+                      <label style="font-size:12px; font-weight:700; margin-bottom:6px; display:block;">Serie de Boleta:</label>
+                      <input type="text" id="settingsSunatSerie" placeholder="B001" value="B001" maxlength="4">
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:12px;">
+                    <label style="font-size:12px; font-weight:700; margin-bottom:6px; display:block;">Razón Social / Nombre Comercial:</label>
+                    <input type="text" id="settingsSunatRazonSocial" placeholder="COMERCIAL BELEZA & HOGAR S.A.C." value="COMERCIAL BELEZA & HOGAR S.A.C.">
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:12px;">
+                    <label style="font-size:12px; font-weight:700; margin-bottom:6px; display:block;">Dirección Fiscal:</label>
+                    <input type="text" id="settingsSunatDireccion" placeholder="Av. Las Flores 456, Lima" value="Av. Las Flores 456, Lima">
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:16px;">
+                    <label style="font-size:12px; font-weight:700; margin-bottom:6px; display:block;">Ambiente SUNAT:</label>
+                    <select id="settingsSunatAmbiente" class="select-full">
+                      <option value="BETA">🟡 BETA (Pruebas y Demostración)</option>
+                      <option value="PROD">🟢 PRODUCCIÓN (Comprobantes Reales)</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" class="btn-success" style="width:100%;">
+                    💾 Guardar Datos de Empresa
+                  </button>
+                </form>
+              </div>
+
+              <!-- TARJETA 3: PERSONALIZACIÓN Y EDITOR DE TICKET 58MM -->
+              <div class="card" style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); grid-column: 1 / -1;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:24px;">🎨</span>
+                    <div>
+                      <h3 style="font-size:15px; font-weight:700; color:var(--text-main); margin:0;">Editor y Personalizador de Comprobante Térmico 58mm</h3>
+                      <small style="color:var(--text-muted);">Personalice el encabezado, RUC, pie de ticket y visualice los cambios en tiempo real</small>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-secondary btn-sm" id="btnSettingsResetTicketTpl">
+                    ↺ Restaurar Predeterminado
+                  </button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start;">
+                  <!-- FORMULARIO DE EDICIÓN -->
+                  <form id="formSettingsTicketTemplate">
+                    <div class="form-group" style="margin-bottom:12px;">
+                      <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Nombre del Negocio / Título del Encabezado:</label>
+                      <input type="text" id="tplTicketCompanyName" placeholder="COMERCIAL BELEZA & HOGAR" value="COMERCIAL BELEZA & HOGAR" class="input-full">
+                    </div>
+
+                    <div class="form-grid col-2" style="margin-bottom:12px;">
+                      <div class="form-group">
+                        <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">RUC / Identificación Fiscal:</label>
+                        <input type="text" id="tplTicketRuc" placeholder="20601234567" value="20601234567" maxlength="11">
+                      </div>
+                      <div class="form-group">
+                        <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Dirección / Contacto:</label>
+                        <input type="text" id="tplTicketAddress" placeholder="Av. Las Flores 456, Lima" value="Av. Las Flores 456, Lima">
+                      </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:12px;">
+                      <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Mensaje de Agradecimiento (Línea 1):</label>
+                      <input type="text" id="tplTicketFooter1" placeholder="¡Gracias por su preferencia!" value="¡Gracias por su preferencia!" class="input-full">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:14px;">
+                      <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Mensaje de Pie de Página (Línea 2):</label>
+                      <input type="text" id="tplTicketFooter2" placeholder="Conserve este comprobante" value="Conserve este comprobante" class="input-full">
+                    </div>
+
+                    <!-- CALIBRADOR DE TAMAÑO Y MÁRGENES FÍSICOS -->
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:16px;">
+                      <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                        <span>📏 Calibración de Tamaño y Límites (58mm)</span>
+                      </div>
+
+                      <div class="form-grid col-2" style="margin-bottom:10px;">
+                        <div class="form-group">
+                          <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between;">
+                            <span>Tamaño de Letra:</span>
+                            <span id="lblTicketFontSize" class="range-slider-badge">7.1 pt</span>
+                          </label>
+                          <div class="range-slider-row">
+                            <input type="range" id="tplTicketFontSize" min="6.2" max="8.5" step="0.1" value="7.1">
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between;">
+                            <span>Margen Izquierdo (X):</span>
+                            <span id="lblTicketMarginLeft" class="range-slider-badge">3 px</span>
+                          </label>
+                          <div class="range-slider-row">
+                            <input type="range" id="tplTicketMarginLeft" min="0" max="8" step="1" value="3">
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:12px; font-weight:700; margin-bottom:4px; display:block;">Ancho de Caracteres por Línea:</label>
+                        <select id="tplTicketColumns" class="select-full">
+                          <option value="30">30 Columnas (Recomendado para rollos de 58mm compactos)</option>
+                          <option value="32" selected>32 Columnas (Estándar 58mm POS)</option>
+                          <option value="34">34 Columnas (Modo Condensado)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                      <button type="submit" class="btn-success" style="flex:1;">
+                        💾 Guardar Plantilla de Ticket
+                      </button>
+                      <button type="button" class="btn-secondary" id="btnSettingsTestCustomTicket" style="flex:1;">
+                        🖨️ Probar Impresión
+                      </button>
+                    </div>
+                  </form>
+
+                  <!-- VISTA PREVIA EN VIVO CON LÍMITES DE IMPRESIÓN Y ZONAS SOMBREADAS -->
+                  <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:16px; display:flex; flex-direction:column; align-items:center;">
+                    <div style="font-size:11px; font-weight:700; color:#334155; text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; width:100%;">
+                      <span style="display:flex; align-items:center; gap:6px;">📄 Vista Previa en Vivo</span>
+                      <span style="background:#2563eb; color:#fff; font-size:9.5px; padding:2px 8px; border-radius:10px; font-weight:700;">Rollo 58 mm</span>
+                    </div>
+
+                    <div class="thermal-roll-outer-wrapper">
+                      <!-- REGLA DE MEDIDAS DE ROLLO Y CABEZAL -->
+                      <div class="thermal-ruler-header">
+                        <div class="ruler-unprintable" title="5mm fuera del cabezal">5mm</div>
+                        <div class="ruler-printable" title="Área de impresión activa">Cabezal Imprimible (48 mm / 384 Puntos)</div>
+                        <div class="ruler-unprintable" title="5mm fuera del cabezal">5mm</div>
+                      </div>
+
+                      <!-- SIMULADOR DE PAPEL TÉRMICO CON MÁRGENES SOMBREADOS Y LÍMITES PUNTEADOS -->
+                      <div class="thermal-paper-roll-frame">
+                        <!-- Zona no imprimible izquierda (sombreada y punteada) -->
+                        <div class="thermal-unprintable-margin left-margin" title="Zona fuera del cabezal térmico (No imprime)">
+                          <span class="margin-label-vertical">NO IMPRIME</span>
+                        </div>
+
+                        <!-- Zona imprimible activa (48mm) -->
+                        <div class="thermal-printable-core">
+                          <pre class="receipt-paper" id="settingsTicketLivePreview" style="font-size:11px; line-height:1.35; margin:0;"></pre>
+                        </div>
+
+                        <!-- Zona no imprimible derecha (sombreada y punteada) -->
+                        <div class="thermal-unprintable-margin right-margin" title="Zona fuera del cabezal térmico (No imprime)">
+                          <span class="margin-label-vertical">NO IMPRIME</span>
+                        </div>
+                      </div>
+
+                      <!-- BADGE DINÁMICO DE ESTADO DE CALIBRACIÓN -->
+                      <div class="margin-status-badge safe" id="thermalMarginStatusBadge">
+                        <span>🟢</span>
+                        <span id="thermalMarginStatusText">Texto 100% calibrado dentro del cabezal</span>
+                      </div>
+
+                      <!-- LEYENDA VISUAL -->
+                      <div class="thermal-guide-legend">
+                        <div class="legend-item">
+                          <span class="legend-color-dot legend-dot-printable"></span>
+                          <span>Área Imprimible</span>
+                        </div>
+                        <div class="legend-item">
+                          <span class="legend-color-dot legend-dot-unprintable"></span>
+                          <span>Límite (Punteado)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-    </main>
-  </div><!-- /.app-container -->
+      </main>
+    </div><!-- /.app-main-workspace -->
+  </div><!-- /.app-layout -->
 
   <!-- ==================== MODALES ==================== -->
 
@@ -460,77 +943,98 @@
         <button class="close-modal" data-modal="productModal">&times;</button>
       </div>
       <form id="productForm">
-        <input type="hidden" id="prodId">
-        <div class="form-grid col-2">
-          <div class="form-group col-span-2">
-            <label>Código de Barras <em>(escanee o escriba)</em>:</label>
-            <div class="input-with-btn">
-              <input type="text" id="prodBarcode" required placeholder="Ej: 7750123001019">
-              <button type="button" id="btnGenBarcode" class="btn-secondary btn-sm">🎲 Generar</button>
+        <div class="product-form-body">
+          
+          <!-- SECCIÓN 1: DATOS GENERALES -->
+          <div class="form-section">
+            <div class="form-section-title">📌 Datos Principales del Producto</div>
+            <div class="form-grid col-2">
+              <div class="form-group col-span-2">
+                <label>Código de Barras o SKU:</label>
+                <div class="input-with-btn">
+                  <input type="text" id="prodBarcode" required placeholder="Ej: 7750123001019 o SKU-000001">
+                  <button type="button" id="btnGenBarcode" class="btn-secondary btn-sm">🎲 Generar SKU</button>
+                </div>
+              </div>
+              <div class="form-group col-span-2">
+                <label>Nombre del Producto:</label>
+                <input type="text" id="prodName" required placeholder="Ej: Shampoo Ego Black 200ml o Pollo Entero Fresco">
+              </div>
+              <div class="form-group">
+                <label>Categoría:</label>
+                <select id="prodCategory"></select>
+              </div>
+              <div class="form-group">
+                <label>Tipo de Venta:</label>
+                <select id="prodIsBulk">
+                  <option value="0">📦 Por Unidad / Empacado</option>
+                  <option value="1">🥩 Pesable / A Granel (Kg / Balanza)</option>
+                </select>
+              </div>
             </div>
           </div>
-          <div class="form-group col-span-2">
-            <label>Nombre del Producto:</label>
-            <input type="text" id="prodName" required placeholder="Ej: Pollo Entero Crudo 1Kg">
+
+          <!-- SECCIÓN 2: PRECIOS Y COSTOS -->
+          <div class="form-section">
+            <div class="form-section-title">💰 Precios y Costos (S/.)</div>
+            <div class="form-grid col-2">
+              <div class="form-group">
+                <label>Precio de Compra / Costo (S/.):</label>
+                <input type="number" id="prodCostPrice" step="0.01" value="0.00" min="0" required placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label>Precio de Venta al Público (S/.):</label>
+                <input type="number" id="prodSalePrice" step="0.01" value="0.00" min="0" required placeholder="0.00">
+              </div>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Categoría:</label>
-            <select id="prodCategory"></select>
+
+          <!-- SECCIÓN 3: CONTROL DE STOCK Y UNIDADES -->
+          <div class="form-section">
+            <div class="form-section-title">📊 Control de Inventario y Medida</div>
+            <div class="form-grid col-3">
+              <div class="form-group">
+                <label>Unidad de Medida:</label>
+                <select id="prodUnit">
+                  <option value="UNIDAD">UNIDAD</option>
+                  <option value="KG">KG (Kilogramos)</option>
+                  <option value="GR">GR (Gramos)</option>
+                  <option value="LT">LT (Litros)</option>
+                  <option value="SACHET">SACHET</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Stock Inicial:</label>
+                <input type="number" id="prodStock" step="0.001" value="10" min="0" required placeholder="10.000">
+              </div>
+              <div class="form-group">
+                <label>Stock Mínimo (Alerta):</label>
+                <input type="number" id="prodMinStock" step="0.001" value="5" min="0" required placeholder="5.000">
+              </div>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Tipo de Venta:</label>
-            <select id="prodIsBulk">
-              <option value="0">📦 Por Unidad Entera</option>
-              <option value="1">🥩 Crudo / A Granel (Por Peso)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Unidad de Medida:</label>
-            <select id="prodUnitMeasure">
-              <option value="UNIDAD">UNIDAD</option>
-              <option value="KG">KG (Kilogramos)</option>
-              <option value="GR">GR (Gramos)</option>
-              <option value="LT">LT (Litros)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Stock Inicial:</label>
-            <input type="number" id="prodStock" step="0.001" value="10" min="0" required>
-          </div>
-          <div class="form-group">
-            <label>Stock Mínimo (Alerta):</label>
-            <input type="number" id="prodMinStock" step="0.001" value="5" min="0" required>
-          </div>
-          <div class="form-group">
-            <label>Precio de Compra ($):</label>
-            <input type="number" id="prodPurchasePrice" step="0.01" value="0.00" min="0" required>
-          </div>
-          <div class="form-group">
-            <label>Precio de Venta ($) <em>inc. IGV</em>:</label>
-            <input type="number" id="prodSalePrice" step="0.01" value="0.00" min="0" required>
-          </div>
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-secondary close-modal" data-modal="productModal">Cancelar</button>
-          <button type="submit" class="btn-primary">💾 Guardar Producto</button>
+          <button type="submit" class="btn-primary btn-lg">💾 Guardar Producto</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: CREAR / EDITAR CLIENTE -->
+  <!-- MODAL: CREAR CLIENTE -->
   <div class="modal-overlay" id="customerModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 id="customerModalTitle">👥 Registrar Cliente</h3>
+        <h3>👥 Registrar Nuevo Cliente</h3>
         <button class="close-modal" data-modal="customerModal">&times;</button>
       </div>
       <form id="customerForm">
-        <input type="hidden" id="custId">
         <div class="form-grid col-2">
           <div class="form-group col-span-2">
-            <label>Nombre Completo:</label>
-            <input type="text" id="custName" required placeholder="Ej: Juan Pérez López">
+            <label>Nombre Completo / Razón Social:</label>
+            <input type="text" id="custName" required placeholder="Ej: María Elena Torres">
           </div>
           <div class="form-group">
             <label>Tipo de Documento:</label>
@@ -542,15 +1046,15 @@
           </div>
           <div class="form-group">
             <label>Número de Documento:</label>
-            <input type="text" id="custDoc" placeholder="Ej: 10482930">
+            <input type="text" id="custDoc" placeholder="Ej: 71293840">
           </div>
           <div class="form-group">
             <label>Teléfono de Contacto:</label>
             <input type="text" id="custPhone" placeholder="Ej: 987654321">
           </div>
           <div class="form-group">
-            <label>Límite de Crédito para Fiado ($):</label>
-            <input type="number" id="custCreditLimit" step="10" value="500.00" required>
+            <label>Límite de Crédito Fiado (S/.):</label>
+            <input type="number" id="custCreditLimit" step="10" value="200.00" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -561,310 +1065,44 @@
     </div>
   </div>
 
-  <!-- MODAL: REGISTRAR ABONO DE FIADO -->
-  <div class="modal-overlay" id="paymentModal">
+  <!-- MODAL: CREAR CATEGORIA -->
+  <div class="modal-overlay" id="categoryModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>💵 Registrar Abono de Fiado</h3>
-        <button class="close-modal" data-modal="paymentModal">&times;</button>
+        <h3>🏷️ Registrar Nueva Categoría</h3>
+        <button class="close-modal" data-modal="categoryModal">&times;</button>
       </div>
-      <form id="paymentForm">
-        <input type="hidden" id="payCustId">
-        <div class="form-grid col-2">
-          <div class="form-group col-span-2">
-            <label>Cliente:</label>
-            <input type="text" id="payCustName" readonly class="input-readonly">
-          </div>
-          <div class="form-group">
-            <label>Deuda Pendiente:</label>
-            <strong id="payCustDebt" class="debt-display">$0.00</strong>
-          </div>
-          <div class="form-group">
-            <label>Monto a Abonar ($):</label>
-            <input type="number" id="payAmount" step="0.50" min="0.50" required placeholder="0.00">
-          </div>
-          <div class="form-group col-span-2">
-            <label>Método de Pago del Abono:</label>
-            <select id="payMethod" class="select-full">
-              <option value="EFECTIVO">💵 Efectivo</option>
-              <option value="TARJETA">💳 Tarjeta</option>
-              <option value="TRANSFERENCIA">📱 Transferencia</option>
-            </select>
-          </div>
+      <form id="categoryForm">
+        <div class="form-group">
+          <label>Nombre de la Categoría:</label>
+          <input type="text" id="catName" required placeholder="Ej: CUIDADO PERSONAL">
+        </div>
+        <div class="form-group">
+          <label>Descripción:</label>
+          <input type="text" id="catDescription" placeholder="Ej: Shampoos, jabones y desodorantes">
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn-secondary close-modal" data-modal="paymentModal">Cancelar</button>
-          <button type="submit" class="btn-success">✅ Registrar Abono</button>
+          <button type="button" class="btn-secondary close-modal" data-modal="categoryModal">Cancelar</button>
+          <button type="submit" class="btn-primary">💾 Guardar Categoría</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: VISTA PREVIA DE COMPROBANTE 58MM -->
-  <div class="modal-overlay" id="ticketModal">
-    <div class="modal-box ticket-modal-box">
-      <div class="modal-header">
-        <h3>🖨️ Vista Previa de Impresión</h3>
-        <button class="close-modal" data-modal="ticketModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        
-        <!-- SELECTOR DE COMPROBANTE: CLIENTE vs SUNAT -->
-        <div class="doc-view-selector">
-          <button class="doc-view-btn active" id="btnViewDocClient">
-            <span>🧾</span> Comprobante Cliente
-            <small>(Impresión Inmediata)</small>
-          </button>
-          <button class="doc-view-btn" id="btnViewDocSunat">
-            <span>📄</span> Boleta SUNAT
-            <small>(Documento Fiscal BVE)</small>
-          </button>
-        </div>
-
-        <!-- NOTA INFORMATIVA -->
-        <div class="doc-view-hint" id="docViewHintText">
-          💡 <strong>Impresión por defecto:</strong> Se entrega el <strong>Comprobante de Pago al Cliente</strong>. La Boleta se registra en SUNAT y se puede imprimir opcionalmente.
-        </div>
-
-        <div class="ticket-status-row">
-          <span id="ticketInvoiceNumber" class="ticket-invoice-label">—</span>
-          <span id="ticketSunatBadge" class="badge-pending">PENDIENTE SUNAT</span>
-        </div>
-
-        <!-- SIMULADOR FÍSICO DE PAPEL TÉRMICO 58MM -->
-        <div class="receipt-printer-wrapper">
-          <div class="receipt-printer-top"></div>
-          <div class="receipt-paper-container">
-            <pre class="receipt-paper" id="receiptPaperText"></pre>
-          </div>
-          <div class="receipt-printer-bottom"></div>
-        </div>
-      </div>
-      <div class="modal-footer" style="justify-content: space-between;">
-        <button class="btn-secondary" id="btnOpenEditTemplatesFromTicket">✏️ Personalizar Plantilla</button>
-        <div style="display:flex; gap:8px;">
-          <button class="btn-secondary close-modal" data-modal="ticketModal">Cerrar</button>
-          <button class="btn-primary" id="btnPrintTicketWindow">🖨️ Imprimir 58mm</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: EDITAR PLANTILLAS Y DATOS DE COMPROBANTES -->
-  <div class="modal-overlay" id="editTemplateModal">
+  <!-- MODAL: DETALLE DE FIADOS Y ABONOS -->
+  <div class="modal-overlay" id="fiadoDetailModal">
     <div class="modal-box modal-lg">
       <div class="modal-header">
-        <h3>✏️ Configurar y Personalizar Plantillas de Comprobantes</h3>
-        <button class="close-modal" data-modal="editTemplateModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        
-        <!-- SELECTOR DE PLANTILLA A EDITAR -->
-        <div class="template-tab-selector">
-          <button class="tpl-tab-btn active" id="tplTabClientBtn">
-            🧾 Plantilla: Comprobante Cliente
-          </button>
-          <button class="tpl-tab-btn" id="tplTabSunatBtn">
-            📄 Plantilla: Boleta Electrónica SUNAT
-          </button>
-        </div>
-
-        <!-- FORMULARIO 1: COMPROBANTE CLIENTE -->
-        <form id="formTemplateClient" class="tpl-form-panel">
-          <h4 style="font-size:14px; color:var(--primary-light); margin-bottom:12px;">🧾 Configuración del Comprobante de Pago al Cliente (Ticket de Caja)</h4>
-          <div class="form-grid col-2">
-            <div class="form-group col-span-2">
-              <label>Título Principal del Ticket:</label>
-              <input type="text" id="tplClientTitle" placeholder="COMPROBANTE DE COMPRA" value="COMPROBANTE DE COMPRA">
-              <small style="color:var(--text-dim)">Ej: COMPROBANTE DE COMPRA, TICKET DE VENTA, NOTA DE PEDIDO</small>
-            </div>
-            <div class="form-group">
-              <label>Nombre Comercial / Marca:</label>
-              <input type="text" id="tplClientBrand" placeholder="VentaFácil Express" value="VentaFácil Express">
-            </div>
-            <div class="form-group">
-              <label>Teléfono / Contacto:</label>
-              <input type="text" id="tplClientPhone" placeholder="Tel: (01) 987-654-321" value="Tel: (01) 987-654-321">
-            </div>
-            <div class="form-group col-span-2">
-              <label>Mensaje de Cabecera (Subtítulo):</label>
-              <input type="text" id="tplClientSubtitle" placeholder="¡Gracias por su visita!" value="¡Gracias por su visita!">
-            </div>
-            <div class="form-group col-span-2">
-              <label>Nota / Política de Cambios al Pie del Ticket:</label>
-              <textarea id="tplClientFooterNote" rows="2" placeholder="Conserve su ticket para cambios dentro de los 7 días. No válido para crédito fiscal.">Conserve su ticket para cambios dentro de los 7 días. No válido para crédito fiscal.</textarea>
-            </div>
-            <div class="form-group col-span-2" style="display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" id="tplClientShowIgv" checked style="width:auto; cursor:pointer;">
-              <label for="tplClientShowIgv" style="cursor:pointer; margin:0;">Mostrar desglose de IGV (18%) en el comprobante del cliente</label>
-            </div>
-          </div>
-          <button type="submit" class="btn-success" style="margin-top:14px; width:100%;">
-            💾 Guardar Plantilla del Comprobante Cliente
-          </button>
-        </form>
-
-        <!-- FORMULARIO 2: BOLETA ELECTRONICA SUNAT -->
-        <form id="formTemplateSunat" class="tpl-form-panel" style="display:none;">
-          <h4 style="font-size:14px; color:var(--warning); margin-bottom:12px;">📄 Datos Oficiales de la Boleta Electrónica (BVE SUNAT)</h4>
-          <div class="form-grid col-2">
-            <div class="form-group">
-              <label>RUC del Emisor: <span class="required-star">*</span></label>
-              <input type="text" id="tplSunatRuc" placeholder="20123456789" value="20123456789" maxlength="11">
-            </div>
-            <div class="form-group">
-              <label>Razón Social (Oficial SUNAT): <span class="required-star">*</span></label>
-              <input type="text" id="tplSunatRazonSocial" placeholder="MI BODEGA SAC" value="MI BODEGA SAC">
-            </div>
-            <div class="form-group col-span-2">
-              <label>Dirección Fiscal Completa:</label>
-              <input type="text" id="tplSunatDireccion" placeholder="Jr. Mercado 123, Lima - PERU" value="Jr. Mercado 123, Lima - PERU">
-            </div>
-            <div class="form-group">
-              <label>Serie Boleta por Defecto:</label>
-              <input type="text" id="tplSunatSerie" placeholder="B001" value="B001" maxlength="4">
-            </div>
-            <div class="form-group">
-              <label>Ambiente SUNAT:</label>
-              <select id="tplSunatAmbiente" class="select-full">
-                <option value="BETA">🟡 BETA (Homologación / Pruebas)</option>
-                <option value="PROD">🟢 PRODUCCIÓN (Facturación Real SUNAT)</option>
-              </select>
-            </div>
-            <div class="form-group col-span-2">
-              <label>Leyenda Tributaria SUNAT (Al Pie):</label>
-              <textarea id="tplSunatLegend" rows="2" placeholder="Representación impresa de la Boleta de Venta Electrónica. Consulte su comprobante en SUNAT.">Representación impresa de la Boleta de Venta Electrónica. Consulte su comprobante en SUNAT.</textarea>
-            </div>
-          </div>
-          <button type="submit" class="btn-success" style="margin-top:14px; width:100%;">
-            💾 Guardar Datos de Boleta SUNAT
-          </button>
-        </form>
-
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary close-modal" data-modal="editTemplateModal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CHECKOUT — ¿PAGA O FÍA? -->
-  <div class="modal-overlay" id="checkoutModal">
-    <div class="modal-box checkout-modal-box">
-      <div class="modal-header">
-        <h3>💳 ¿Cómo paga el cliente?</h3>
-        <button class="close-modal" data-modal="checkoutModal">&times;</button>
-      </div>
-      <div class="modal-body">
-
-        <!-- RESUMEN DEL TOTAL -->
-        <div class="checkout-total-banner">
-          <span class="checkout-total-label">Total a Cobrar</span>
-          <span class="checkout-total-amount" id="checkoutTotalDisplay">S/. 0.00</span>
-          <span class="checkout-igv-note" id="checkoutIgvNote">Incluye IGV S/. 0.00</span>
-        </div>
-
-        <!-- SELECTOR PAY / FIAR -->
-        <div class="pay-or-fiar-selector">
-          <button class="pof-btn active" id="pofBtnPay" data-mode="pay">
-            <span class="pof-icon">💵</span>
-            <strong>PAGA AHORA</strong>
-            <small>Cobrar al contado</small>
-          </button>
-          <button class="pof-btn" id="pofBtnFiar" data-mode="fiar">
-            <span class="pof-icon">🤝</span>
-            <strong>FIADO</strong>
-            <small>Crédito a su cuenta</small>
-          </button>
-        </div>
-
-        <!-- PANEL: PAGO AL CONTADO -->
-        <div class="pof-panel" id="panelPay">
-          <div class="form-group">
-            <label>Método de Pago:</label>
-            <div class="payment-method-grid">
-              <button class="pay-method-btn active" data-method="EFECTIVO">
-                <span>💵</span> Efectivo
-              </button>
-              <button class="pay-method-btn" data-method="TARJETA">
-                <span>💳</span> Tarjeta
-              </button>
-              <button class="pay-method-btn" data-method="TRANSFERENCIA">
-                <span>📱</span> Transferencia
-              </button>
-            </div>
-          </div>
-
-          <!-- EFECTIVO: calculadora de cambio -->
-          <div class="cash-calc-box" id="cashCalcBox">
-            <div class="cash-row">
-              <label>Efectivo recibido (S/.):</label>
-              <input type="number" id="coEfectivoInput" step="0.50" min="0" placeholder="0.00">
-            </div>
-            <div class="cash-row change-highlight">
-              <span>Cambio a devolver:</span>
-              <strong id="coChangeDisplay">S/. 0.00</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- PANEL: FIADO -->
-        <div class="pof-panel" id="panelFiar" style="display:none;">
-          <div class="form-group">
-            <label>Seleccionar cliente a fiar: <span class="required-star">*</span></label>
-            <select id="coFiadoSelect" class="select-full">
-              <option value="">— Buscar cliente —</option>
-            </select>
-          </div>
-          <div class="fiado-client-info" id="fiadoClientInfo" style="display:none;">
-            <div class="fci-row">
-              <span>Límite de crédito:</span>
-              <strong id="fciLimit">—</strong>
-            </div>
-            <div class="fci-row">
-              <span>Deuda actual:</span>
-              <strong id="fciDebt" class="text-danger">—</strong>
-            </div>
-            <div class="fci-row">
-              <span>Crédito disponible:</span>
-              <strong id="fciAvailable" class="text-success">—</strong>
-            </div>
-            <div class="fci-row fci-new-debt">
-              <span>Nueva deuda tras esta compra:</span>
-              <strong id="fciNewDebt" class="text-warning">—</strong>
-            </div>
-          </div>
-          <div class="fiado-warning" id="fiadoOverLimitWarning" style="display:none;">
-            ⚠️ Esta compra supera el límite de crédito del cliente. Puede autorizarlo manualmente.
-          </div>
-        </div>
-
-      </div>
-      <div class="modal-footer">
-        <button class="btn-secondary close-modal" data-modal="checkoutModal">Cancelar</button>
-        <button class="btn-success btn-confirm-checkout" id="btnConfirmCheckout">
-          🖨️ Confirmar y Emitir Comprobante
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: DETALLE DE FIADOS POR CLIENTE -->
-  <div class="modal-overlay" id="fiadoDetailModal">
-    <div class="modal-box modal-xl">
-      <div class="modal-header">
         <div>
-          <h3 id="fiadoDetailTitle">📋 Historial de Fiados — Cliente</h3>
+          <h3 id="fiadoDetailTitle">📋 Historial de Fiados</h3>
           <small id="fiadoDetailSubtitle" style="color:var(--text-muted)"></small>
         </div>
         <button class="close-modal" data-modal="fiadoDetailModal">&times;</button>
       </div>
       <div class="modal-body">
-
-        <!-- RESUMEN DEL CLIENTE -->
         <div class="fiado-detail-summary">
           <div class="fds-item">
-            <span class="fds-label">Deuda Total</span>
+            <span class="fds-label">Deuda Actual</span>
             <strong class="fds-value text-danger" id="fdsDebtTotal">S/. 0.00</strong>
           </div>
           <div class="fds-item">
@@ -875,106 +1113,520 @@
             <span class="fds-label">Disponible</span>
             <strong class="fds-value text-success" id="fdsAvailable">S/. 0.00</strong>
           </div>
-          <div class="fds-item">
-            <span class="fds-label">Compras Fiadas</span>
-            <strong class="fds-value" id="fdsSalesCount">0</strong>
-          </div>
         </div>
 
-        <!-- TABLA DE COMPRAS FIADAS -->
-        <h4 style="font-size:13px; color:var(--text-muted); margin-bottom:8px; margin-top:16px;">🛒 Compras Pendientes de Pago</h4>
-        <div class="table-card" style="margin-bottom:16px;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Comprobante</th>
-                <th>Fecha</th>
-                <th>Productos</th>
-                <th>Total Fiado</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody id="fiadoSalesDetailBody"></tbody>
-          </table>
-        </div>
-
-        <!-- REGISTRAR ABONO -->
-        <div class="abono-box">
-          <h4>💵 Registrar Abono</h4>
+        <div class="abono-box" style="margin-top:16px; padding:16px; background:var(--bg-card-2); border-radius:var(--radius-md);">
+          <h4 style="margin-bottom:10px;">💵 Registrar Abono de Dinero</h4>
           <input type="hidden" id="fiadoDetailCustId">
-          <div class="form-grid col-2" style="padding:0; margin-top:10px;">
+          <div class="form-grid col-2">
             <div class="form-group">
-              <label>Monto del Abono (S/.):</label>
+              <label>Monto a Abonar (S/.):</label>
               <input type="number" id="abonoAmountInput" step="0.50" min="0.50" placeholder="0.00">
             </div>
             <div class="form-group">
-              <label>Método del Abono:</label>
+              <label>Método de Pago:</label>
               <select id="abonoMethodSelect" class="select-full">
                 <option value="EFECTIVO">💵 Efectivo</option>
                 <option value="TARJETA">💳 Tarjeta</option>
-                <option value="TRANSFERENCIA">📱 Transferencia</option>
+                <option value="TRANSFERENCIA">📱 Transferencia / Yape</option>
               </select>
             </div>
           </div>
           <button class="btn-success" id="btnRegistrarAbono" style="margin-top:10px; width:100%;">
-            ✅ Registrar Abono y Actualizar Deuda
+            ✅ Registrar Abono y Rebajar Deuda
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary close-modal" data-modal="fiadoDetailModal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PESAR PRODUCTO A GRANEL / BALANZA (PANTALLA TÁCTIL COMPLETA CON NUMPAD) -->
+  <div class="modal-overlay" id="weighModal">
+    <div class="modal-box modal-weigh-box">
+      <div class="modal-header">
+        <h3 id="weighModalTitle">⚖️ Pesar Producto en Balanza</h3>
+        <button class="close-modal" data-modal="weighModal">&times;</button>
+      </div>
+      <div class="modal-body weigh-modal-grid">
+        <!-- COLUMNA IZQUIERDA: DETALLES, PRESETS Y TOTAL -->
+        <div class="weigh-col-left">
+          <!-- BÚSQUEDA Y CHIPS DE PRODUCTOS A GRANEL -->
+          <div class="weigh-search-section">
+            <label class="weigh-input-label">🔍 SELECCIONAR / BUSCAR PRODUCTO A GRANEL:</label>
+            <div class="weigh-search-wrapper">
+              <input type="text" id="weighSearchInput" class="weigh-search-input" placeholder="🔍 Escribe para buscar (ej. Cebolla, Pollo, Papa, Queso...)" autocomplete="off">
+              <button type="button" class="btn-clear-weigh-search" id="btnClearWeighSearch" title="Borrar búsqueda" style="display: none;">&times;</button>
+              <div class="weigh-search-dropdown" id="weighSearchResults" style="display: none;"></div>
+            </div>
+            <div class="weigh-chips-container" id="weighBulkChips">
+              <!-- Chips de productos a granel renderizados dinámicamente -->
+            </div>
+          </div>
+
+          <!-- CABECERA DEL PRODUCTO -->
+          <div class="weigh-product-header">
+            <div class="weigh-prod-icon" id="weighProdIcon">🥩</div>
+            <div class="weigh-prod-details">
+              <h4 id="weighProdName">POLLO ENTERO FRESCO</h4>
+              <span id="weighProdPrice" class="weigh-price-tag">Precio: S/. 9.20 / Kg</span>
+            </div>
+          </div>
+
+          <!-- INPUT DE PESO GIGANTE -->
+          <div class="weigh-main-control">
+            <label class="weigh-input-label">PESO EN KILOGRAMOS (KG):</label>
+            <div class="weigh-input-container">
+              <button type="button" class="btn-step-weight" id="btnWeightMinus" title="Restar 100g">− 0.1</button>
+              <div class="weigh-input-box">
+                <input type="text" id="weighInputKg" value="1.000" autofocus autocomplete="off">
+                <span class="weigh-unit-badge">KG</span>
+              </div>
+              <button type="button" class="btn-step-weight" id="btnWeightPlus" title="Sumar 100g">+ 0.1</button>
+            </div>
+          </div>
+
+          <!-- BOTONES PRESET TÁCTILES RÁPIDOS -->
+          <label class="weigh-input-label">⚡ ACCESO RÁPIDO:</label>
+          <div class="weigh-presets-grid">
+            <button type="button" class="btn-weigh-big" data-weight="0.250">
+              <strong>¼ Kg</strong>
+              <small>250g</small>
+            </button>
+            <button type="button" class="btn-weigh-big" data-weight="0.500">
+              <strong>½ Kg</strong>
+              <small>500g</small>
+            </button>
+            <button type="button" class="btn-weigh-big" data-weight="0.750">
+              <strong>¾ Kg</strong>
+              <small>750g</small>
+            </button>
+            <button type="button" class="btn-weigh-big" data-weight="1.000">
+              <strong>1.0 Kg</strong>
+              <small>1000g</small>
+            </button>
+            <button type="button" class="btn-weigh-big" data-weight="1.500">
+              <strong>1.5 Kg</strong>
+              <small>1500g</small>
+            </button>
+            <button type="button" class="btn-weigh-big" data-weight="2.000">
+              <strong>2.0 Kg</strong>
+              <small>2000g</small>
+            </button>
+          </div>
+
+          <!-- BANNER TOTAL GIGANTE -->
+          <div class="weigh-total-banner">
+            <div class="weigh-total-info">
+              <span class="label">TOTAL A COBRAR</span>
+              <small id="weighFormulaText">1.000 Kg × S/. 9.20</small>
+            </div>
+            <div class="weigh-total-amount" id="weighTotalPreview">S/. 9.20</div>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: TECLADO NUMÉRICO TÁCTIL GIGANTE -->
+        <div class="weigh-col-right">
+          <div class="weigh-numpad-header">
+            <span class="weigh-input-label">🔢 TECLADO TÁCTIL (DIGITAR PESO):</span>
+          </div>
+          <div class="weigh-numpad-grid">
+            <button type="button" class="btn-touch-num" data-val="7">7</button>
+            <button type="button" class="btn-touch-num" data-val="8">8</button>
+            <button type="button" class="btn-touch-num" data-val="9">9</button>
+
+            <button type="button" class="btn-touch-num" data-val="4">4</button>
+            <button type="button" class="btn-touch-num" data-val="5">5</button>
+            <button type="button" class="btn-touch-num" data-val="6">6</button>
+
+            <button type="button" class="btn-touch-num" data-val="1">1</button>
+            <button type="button" class="btn-touch-num" data-val="2">2</button>
+            <button type="button" class="btn-touch-num" data-val="3">3</button>
+
+            <button type="button" class="btn-touch-num btn-touch-clear" id="btnWeighNumpadClear" title="Borrar todo">C</button>
+            <button type="button" class="btn-touch-num" data-val="0">0</button>
+            <button type="button" class="btn-touch-num" data-val=".">.</button>
+
+            <button type="button" class="btn-touch-num btn-touch-backspace" id="btnWeighNumpadBack" title="Borrar último dígito">⌫</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer weigh-modal-footer">
+        <button class="btn-secondary btn-lg close-modal" data-modal="weighModal">Cancelar</button>
+        <button class="btn-success btn-lg btn-confirm-weigh" id="btnConfirmWeighModal">
+          ➕ AÑADIR AL TICKET (ENTER)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CHECKOUT -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal-box checkout-modal-box">
+      <div class="modal-header">
+        <h3>💳 Cobrar Venta</h3>
+        <button class="close-modal" data-modal="checkoutModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="checkout-total-banner">
+          <span class="checkout-total-label">Total a Cobrar</span>
+          <span class="checkout-total-amount" id="checkoutTotalDisplay">S/. 0.00</span>
+          <span class="checkout-igv-note" id="checkoutIgvNote">Incluye IGV (18%)</span>
+        </div>
+
+        <div class="pay-or-fiar-selector">
+          <button class="pof-btn active" id="pofBtnPay" data-mode="pay">
+            <span class="pof-icon">💵</span>
+            <strong>PAGA AHORA</strong>
+            <small>Cobrar en caja</small>
+          </button>
+          <button class="pof-btn" id="pofBtnFiar" data-mode="fiar">
+            <span class="pof-icon">🤝</span>
+            <strong>FIADO</strong>
+            <small>Crédito a cliente</small>
           </button>
         </div>
 
+        <div class="pof-panel" id="panelPay">
+          <div class="form-group">
+            <label>Método de Pago:</label>
+            <div class="payment-method-grid">
+              <button class="pay-method-btn active" data-method="EFECTIVO">💵 Efectivo</button>
+              <button class="pay-method-btn" data-method="TARJETA">💳 Tarjeta</button>
+              <button class="pay-method-btn" data-method="TRANSFERENCIA">📱 Yape / Plin</button>
+            </div>
+          </div>
+
+          <div class="cash-calc-box" id="cashCalcBox">
+            <div class="cash-row">
+              <label>Efectivo recibido (S/.):</label>
+              <input type="number" id="coEfectivoInput" step="0.50" min="0" placeholder="0.00">
+            </div>
+            <div class="cash-row change-highlight">
+              <span>Vuelto a entregar:</span>
+              <strong id="coChangeDisplay">S/. 0.00</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="pof-panel" id="panelFiar" style="display:none;">
+          <div class="form-group">
+            <label>Seleccionar Cliente Fiado: <span class="required-star">*</span></label>
+            <select id="coFiadoSelect" class="select-full"></select>
+          </div>
+          <div class="fiado-client-info" id="fiadoClientInfo" style="display:none;">
+            <div class="fci-row"><span>Límite de crédito:</span><strong id="fciLimit">—</strong></div>
+            <div class="fci-row"><span>Deuda actual:</span><strong id="fciDebt" class="text-danger">—</strong></div>
+            <div class="fci-row"><span>Crédito disponible:</span><strong id="fciAvailable" class="text-success">—</strong></div>
+            <div class="fci-row fci-new-debt"><span>Nueva deuda:</span><strong id="fciNewDebt" class="text-warning">—</strong></div>
+          </div>
+          <div class="fiado-warning" id="fiadoOverLimitWarning" style="display:none;">
+            ⚠️ Esta compra supera el límite de crédito del cliente.
+          </div>
+        </div>
       </div>
-  <!-- ==================== MODAL IMPORTAR CSV / SHEETS ==================== -->
-  <div class="modal" id="importCsvModal">
-    <div class="modal-content modal-md">
+      <div class="modal-footer">
+        <button class="btn-secondary close-modal" data-modal="checkoutModal">Cancelar</button>
+        <button class="btn-success btn-confirm-checkout" id="btnConfirmCheckout">
+          🖨️ Confirmar y Emitir Comprobante
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR CSV / GOOGLE SHEETS -->
+  <div class="modal-overlay" id="importCsvModal">
+    <div class="modal-box modal-md">
       <div class="modal-header">
         <h3>📥 Importar Inventario desde CSV / Google Sheets</h3>
         <button class="close-modal" data-modal="importCsvModal">&times;</button>
       </div>
       <div class="modal-body">
         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-          Carga un archivo <strong>.csv</strong> local o pega la URL pública de tu <strong>Google Sheets</strong> para sincronizar productos, marcas y categorías.
+          Carga tu archivo <strong>.CSV</strong> o ingresa la URL de <strong>Google Sheets</strong> para sincronizar productos, marcas y categorías.
         </p>
 
-        <!-- PESTAÑAS OPCIÓN -->
         <div style="display: flex; gap: 8px; margin-bottom: 16px;">
           <button class="btn-sm btn-primary active" id="tabOptionFile" style="flex:1;">📁 Archivo CSV Local</button>
           <button class="btn-sm btn-secondary" id="tabOptionUrl" style="flex:1;">🌐 URL Google Sheets</button>
         </div>
 
-        <!-- OPCIÓN 1: ARCHIVO LOCAL -->
         <div id="sectionOptionFile">
           <div class="drop-zone" id="csvDropZone" style="border: 2px dashed var(--primary); border-radius: var(--radius-md); padding: 24px; text-align: center; cursor: pointer; background-color: var(--primary-light);">
             <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
             <strong style="color: var(--primary-text); display: block; margin-bottom: 4px;">Haz clic o arrastra tu archivo .CSV aquí</strong>
-            <span style="font-size: 11px; color: var(--text-muted);">Archivos compatibles: .csv (codificación UTF-8)</span>
+            <span style="font-size: 11px; color: var(--text-muted);">Formato compatible: .csv con encabezados</span>
             <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
           </div>
           <div id="fileSelectedInfo" style="margin-top: 10px; font-size: 12px; display:none;" class="text-success"></div>
         </div>
 
-        <!-- OPCIÓN 2: URL DE GOOGLE SHEETS -->
         <div id="sectionOptionUrl" style="display:none;">
           <div class="form-group">
-            <label>Enlace público de exportación CSV de Google Sheets:</label>
+            <label>Enlace público CSV de Google Sheets:</label>
             <input type="url" id="csvUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv" class="input-full">
-            <small style="color: var(--text-muted); display: block; margin-top: 4px;">
-              Asegúrate de que la hoja de Google Sheets esté compartida como pública en "Cualquier persona con el enlace".
-            </small>
           </div>
         </div>
 
-        <!-- RESULTADOS Y ESTADÍSTICAS -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-top:14px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; cursor:pointer; color:#0f172a;">
+            <input type="checkbox" id="chkClearBeforeImport">
+            <span>🗑️ Borrar inventario actual antes de importar (Empezar catálogo desde 0)</span>
+          </label>
+        </div>
+
         <div id="importStatusResult" style="margin-top: 16px; display:none;" class="alert-banner">
           <div id="importStatusText"></div>
         </div>
       </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button type="button" class="btn-danger btn-sm" id="btnWipeCatalogNow" style="background:#ef4444; color:#fff; border:none; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+          🗑️ Vaciar Inventario Ahora
+        </button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-secondary close-modal" data-modal="importCsvModal">Cancelar</button>
+          <button class="btn-primary" id="btnExecuteImport" style="background-color: var(--success);">⚡ IMPORTAR AHORA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VISTA PREVIA DE COMPROBANTE 58MM -->
+  <div class="modal-overlay" id="ticketModal">
+    <div class="modal-box ticket-modal-box">
+      <div class="modal-header">
+        <h3>🖨️ Comprobante de Pago 58mm</h3>
+        <button class="close-modal" data-modal="ticketModal">&times;</button>
+      </div>
+      <div class="modal-body" style="background:#f1f5f9; padding:18px 12px; display:flex; flex-direction:column; align-items:center;">
+        <div class="thermal-paper-roll-frame">
+          <!-- Zona no imprimible izquierda (sombreada y punteada) -->
+          <div class="thermal-unprintable-margin left-margin" title="Zona fuera del cabezal térmico (No imprime)"></div>
+
+          <!-- Zona imprimible activa (48mm) -->
+          <div class="thermal-printable-core">
+            <pre class="receipt-paper" id="receiptPaperText" style="font-size:11px; line-height:1.38; margin:0;"></pre>
+          </div>
+
+          <!-- Zona no imprimible derecha (sombreada y punteada) -->
+          <div class="thermal-unprintable-margin right-margin" title="Zona fuera del cabezal térmico (No imprime)"></div>
+        </div>
+
+        <!-- LEYENDA VISUAL -->
+        <div class="thermal-guide-legend" style="margin-top:12px; max-width:290px;">
+          <div class="legend-item">
+            <span class="legend-color-dot legend-dot-printable"></span>
+            <span>Imprimible (48mm)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color-dot legend-dot-unprintable"></span>
+            <span>No Imprime (Punteada)</span>
+          </div>
+        </div>
+      </div>
       <div class="modal-footer">
-        <button class="btn-secondary close-modal" data-modal="importCsvModal">Cancelar</button>
-        <button class="btn-primary" id="btnExecuteImport" style="background-color: var(--success);">⚡ IMPORTAR AHORA</button>
+        <button class="btn-secondary close-modal" data-modal="ticketModal">Cerrar</button>
+        <button class="btn-primary" id="btnPrintTicketWindow">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR PLANTILLAS SUNAT -->
+  <div class="modal-overlay" id="editTemplateModal">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3>✏️ Configurar Emisor SUNAT</h3>
+        <button class="close-modal" data-modal="editTemplateModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formTemplateSunat">
+          <div class="form-grid col-2">
+            <div class="form-group">
+              <label>RUC del Emisor:</label>
+              <input type="text" id="tplSunatRuc" placeholder="20601234567" value="20601234567" maxlength="11">
+            </div>
+            <div class="form-group">
+              <label>Razón Social:</label>
+              <input type="text" id="tplSunatRazonSocial" placeholder="COMERCIAL BELEZA & HOGAR S.A.C." value="COMERCIAL BELEZA & HOGAR S.A.C.">
+            </div>
+            <div class="form-group col-span-2">
+              <label>Dirección Fiscal:</label>
+              <input type="text" id="tplSunatDireccion" placeholder="Av. Las Flores 456, Lima" value="Av. Las Flores 456, Lima">
+            </div>
+            <div class="form-group">
+              <label>Serie Boleta:</label>
+              <input type="text" id="tplSunatSerie" placeholder="B001" value="B001" maxlength="4">
+            </div>
+            <div class="form-group">
+              <label>Ambiente:</label>
+              <select id="tplSunatAmbiente">
+                <option value="BETA">🟡 BETA (Pruebas)</option>
+                <option value="PROD">🟢 PRODUCCIÓN</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-success" style="margin-top:14px; width:100%;">
+            💾 Guardar Datos SUNAT
+          </button>
+        </form>
+      </div>
+  <!-- MODAL: DETECCIÓN Y CONFIGURACIÓN DE IMPRESORA TÉRMICA -->
+  <div class="modal-overlay" id="printerModal">
+    <div class="modal-box modal-md">
+      <div class="modal-header">
+        <h3>🖨️ Configuración de Impresora Térmica</h3>
+        <button class="close-modal" data-modal="printerModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="printer-status-box" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius-md); margin-bottom: 16px;">
+          <span style="font-size: 28px;">🖨️</span>
+          <div>
+            <strong style="color: #166534; font-size: 13.5px; display: block;" id="printerModalStatusTitle">Impresora Lista y Sincronizada</strong>
+            <small style="color: #15803d;" id="printerModalStatusSubtitle">Detectando puertos USB y controladores Windows...</small>
+          </div>
+        </div>
+
+        <form id="formPrinterConfig">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label>Impresora Seleccionada (Detectada en Windows):</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="selectPrinterDevice" class="select-full" style="flex: 1;">
+                <option value="">Cargando impresoras...</option>
+              </select>
+              <button type="button" class="btn-secondary btn-sm" id="btnRefreshPrinters" title="Volver a escanear puertos Windows">
+                🔄 Buscar
+              </button>
+            </div>
+          </div>
+
+          <div class="form-grid col-2" style="margin-bottom: 12px;">
+            <div class="form-group">
+              <label>Ancho de Papel:</label>
+              <select id="printerPaperWidth" class="select-full">
+                <option value="58" selected>58 mm (Estándar Punto de Venta)</option>
+                <option value="80">80 mm (Ticket Ancho)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Modo de Impresión:</label>
+              <select id="printerPrintMode" class="select-full">
+                <option value="direct" selected>⚡ Impresión Directa Rápida (ESC/POS)</option>
+                <option value="dialog">📄 Diálogo de Impresión de Windows</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section" style="margin-bottom: 14px;">
+            <div class="form-section-title">⚙️ Opciones de Hardware POS</div>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="chkPrintOnSale" checked>
+                <span>🖨️ Imprimir ticket automáticamente al confirmar venta</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-secondary" id="btnTestPrinter" style="flex: 1;">
+              📄 Imprimir Ticket de Prueba
+            </button>
+            <button type="submit" class="btn-success" style="flex: 1;">
+              💾 Guardar y Sincronizar
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary close-modal" data-modal="printerModal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: LISTA DE REPOSICIÓN / PEDIDO A PROVEEDOR ==================== -->
+  <div class="modal-overlay" id="purchaseListModal">
+    <div class="modal-box modal-lg" style="max-width: 780px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">📝</span>
+          <div>
+            <h3 style="color:#ffffff; margin:0; font-size:16px;">Lista de Reposición y Pedido a Proveedor</h3>
+            <small style="color:#94a3b8; font-size:11px;">Cálculo automático de unidades a reponer para evitar quiebres de stock</small>
+          </div>
+        </div>
+        <button class="close-modal" data-modal="purchaseListModal" style="color:#94a3b8;">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div class="purchase-summary-strip" id="purchaseSummaryStrip">
+          <div class="pss-box">
+            <span class="pss-label">Artículos a Reponer</span>
+            <strong class="pss-val" id="pssItemsCount" style="color:var(--danger)">0</strong>
+          </div>
+          <div class="pss-box">
+            <span class="pss-label">Unidades Sugeridas</span>
+            <strong class="pss-val" id="pssUnitsCount" style="color:var(--primary)">0</strong>
+          </div>
+          <div class="pss-box">
+            <span class="pss-label">Inversión Estimada (Costo)</span>
+            <strong class="pss-val" id="pssEstimatedCost" style="color:var(--success)">S/. 0.00</strong>
+          </div>
+        </div>
+
+        <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-top: 14px;">
+          <table class="data-table" id="purchaseListTable">
+            <thead>
+              <tr style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+                <th>#</th>
+                <th>Código / SKU</th>
+                <th>Producto / Marca</th>
+                <th>Stock Actual</th>
+                <th>Mínimo</th>
+                <th>Sugerido a Comprar</th>
+                <th>P. Compra</th>
+                <th>Subtotal Est.</th>
+              </tr>
+            </thead>
+            <tbody id="purchaseListTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-secondary btn-sm" id="btnCopyPurchaseList">
+            📋 Copiar para WhatsApp
+          </button>
+          <button type="button" class="btn-primary btn-sm" id="btnPrintPurchaseTicket">
+            🖨️ Imprimir Lista (Ticket 58mm)
+          </button>
+        </div>
+        <button class="btn-secondary close-modal" data-modal="purchaseListModal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <!-- ==================== CONTENEDOR DE NOTIFICACIONES TOAST ==================== -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- ==================== MODAL GLOBAL DE ALERTAS Y CONFIRMACIONES DEL SISTEMA ==================== -->
+  <div class="modal-overlay" id="systemDialogModal" style="z-index: 10001;">
+    <div class="modal-box sys-dialog-box" style="max-width: 440px; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+      <div class="sys-dialog-header" id="sysDialogHeader" style="padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+        <div id="sysDialogIcon" class="sys-dialog-icon" style="font-size: 24px; line-height: 1;">ℹ️</div>
+        <div>
+          <h3 id="sysDialogTitle" style="font-size: 15px; font-weight: 700; margin: 0; color: var(--text-main);">Notificación</h3>
+          <small id="sysDialogSubtitle" style="color: var(--text-muted); font-size: 11px;">VentaFácil POS</small>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div id="sysDialogMessage" style="font-size: 13.5px; line-height: 1.55; color: #334155; white-space: pre-line;"></div>
+      </div>
+      <div class="modal-footer" style="padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn-secondary" id="btnSysDialogCancel" style="display: none; padding: 8px 16px; font-weight: 600;">Cancelar</button>
+        <button type="button" class="btn-primary" id="btnSysDialogConfirm" style="padding: 8px 22px; font-weight: 700;">Aceptar</button>
       </div>
     </div>
   </div>
 
   <script src="app.js"></script>
-
 </body>
 </html>

@@ -141,6 +141,7 @@ class SaleModel {
                       db.run('COMMIT', (commitErr) => {
                         if (commitErr) return reject(commitErr);
                         resolve({
+                          id: saleId,
                           saleId,
                           invoice_number: formattedInvoiceNumber,
                           document_type,
@@ -157,6 +158,7 @@ class SaleModel {
                     db.run('COMMIT', (commitErr) => {
                       if (commitErr) return reject(commitErr);
                       resolve({
+                        id: saleId,
                         saleId,
                         invoice_number: formattedInvoiceNumber,
                         document_type,
@@ -205,6 +207,33 @@ class SaleModel {
       LIMIT ?
     `;
     return await query(sql, [limit]);
+  }
+
+  static async cancelSale(saleId) {
+    const sale = await this.getById(saleId);
+    if (!sale) throw new Error('Venta no encontrada');
+    if (sale.sunat_status === 'ANULADO') throw new Error('La venta ya se encuentra anulada');
+
+    // 1. Marcar venta como ANULADO
+    await run(`UPDATE sales SET sunat_status = 'ANULADO', is_paid = 0 WHERE id = ?`, [saleId]);
+
+    // 2. Revertir stock de cada producto en la venta
+    if (sale.details && sale.details.length > 0) {
+      for (const item of sale.details) {
+        const qty = parseFloat(item.quantity || 0);
+        const barcode = item.barcode || item.product_id;
+        if (qty > 0 && barcode) {
+          await run(`UPDATE products SET stock = stock + ? WHERE barcode = ? OR id = ?`, [qty, barcode, barcode]);
+        }
+      }
+    }
+
+    // 3. Si la venta fue fiada, reducir la deuda del cliente
+    if (sale.payment_method === 'FIADO' && sale.customer_id) {
+      await run(`UPDATE customers SET current_debt = MAX(0, current_debt - ?) WHERE id = ?`, [sale.total_amount, sale.customer_id]);
+    }
+
+    return true;
   }
 }
 

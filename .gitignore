@@ -29,3 +29,6 @@ dist/
 build/
 VentaFacilDesktop/bin/
 VentaFacilDesktop/obj/
+bin/
+obj/
+scratch/
