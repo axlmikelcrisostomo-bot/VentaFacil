@@ -38,7 +38,7 @@ class SaleModel {
 
       const projectedDebt = parseFloat(customer.current_debt) + total_amount;
       if (projectedDebt > parseFloat(customer.credit_limit)) {
-        throw new Error(`Exceso de Límite de Crédito: El cliente ${customer.name} tiene un límite de $${customer.credit_limit} y una deuda actual de $${customer.current_debt}. Esta venta superaría su límite permitido.`);
+        throw new Error(`Exceso de Límite de Crédito: El cliente ${customer.name} tiene un límite de S/.${customer.credit_limit} y una deuda actual de S/.${customer.current_debt}. Esta venta superaría su límite permitido.`);
       }
     } else if (customer_id) {
       customer = await CustomerModel.getById(customer_id);
@@ -48,7 +48,7 @@ class SaleModel {
     const change_due = isFiado ? 0.00 : Math.max(0, paidAmount - total_amount);
 
     if (!isFiado && paidAmount < total_amount) {
-      throw new Error(`Monto pagado ($${paidAmount}) es menor al total ($${total_amount}).`);
+      throw new Error(`Monto pagado (S/.${paidAmount}) es menor al total (S/.${total_amount}).`);
     }
 
     // Obtener Serie y Correlativo Electrónico SUNAT
@@ -98,7 +98,7 @@ class SaleModel {
           qrData
         ], function (err) {
           if (err) {
-            db.run('ROLLBACK');
+            db.run('ROLLBACK', () => {});
             return reject(err);
           }
 
@@ -107,7 +107,7 @@ class SaleModel {
             INSERT INTO sale_details (sale_id, product_id, product_name, barcode, unit_price, quantity, unit_measure, igv, subtotal)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
-          const updateStockSql = `UPDATE products SET stock = stock - ? WHERE barcode = ?`;
+          const updateStockSql = `UPDATE products SET stock = stock - ? WHERE sku = ? OR barcode = ?`;
 
           let completedItems = 0;
           for (const item of items) {
@@ -115,17 +115,18 @@ class SaleModel {
             const itemSubtotal = parseFloat(item.sale_price) * qty;
             const itemIgv = itemSubtotal - (itemSubtotal / 1.18);
             const unitMeasure = item.unit_measure || (item.is_bulk ? 'KG' : 'UNIDAD');
-            const itemBarcode = item.barcode || item.id;
+            const itemSku = item.sku || item.product_id || item.id || item.barcode;
+            const itemBarcode = item.barcode || itemSku;
 
-            db.run(insertDetailSql, [saleId, itemBarcode, item.name, itemBarcode, item.sale_price, qty, unitMeasure, itemIgv, itemSubtotal], (err2) => {
+            db.run(insertDetailSql, [saleId, itemSku, item.name, itemBarcode, item.sale_price, qty, unitMeasure, itemIgv, itemSubtotal], (err2) => {
               if (err2) {
-                db.run('ROLLBACK');
+                db.run('ROLLBACK', () => {});
                 return reject(err2);
               }
 
-              db.run(updateStockSql, [qty, itemBarcode], (err3) => {
+              db.run(updateStockSql, [qty, itemSku, itemBarcode], (err3) => {
                 if (err3) {
-                  db.run('ROLLBACK');
+                  db.run('ROLLBACK', () => {});
                   return reject(err3);
                 }
 
@@ -135,7 +136,7 @@ class SaleModel {
                     const updateDebtSql = `UPDATE customers SET current_debt = current_debt + ? WHERE id = ?`;
                     db.run(updateDebtSql, [total_amount, customer_id], (err4) => {
                       if (err4) {
-                        db.run('ROLLBACK');
+                        db.run('ROLLBACK', () => {});
                         return reject(err4);
                       }
                       db.run('COMMIT', (commitErr) => {
@@ -221,9 +222,9 @@ class SaleModel {
     if (sale.details && sale.details.length > 0) {
       for (const item of sale.details) {
         const qty = parseFloat(item.quantity || 0);
-        const barcode = item.barcode || item.product_id;
-        if (qty > 0 && barcode) {
-          await run(`UPDATE products SET stock = stock + ? WHERE barcode = ? OR id = ?`, [qty, barcode, barcode]);
+        const itemKey = item.product_id || item.barcode;
+        if (qty > 0 && itemKey) {
+          await run(`UPDATE products SET stock = stock + ? WHERE sku = ? OR barcode = ?`, [qty, itemKey, itemKey]);
         }
       }
     }

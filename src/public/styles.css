@@ -1317,6 +1317,10 @@ body {
   padding: 12px;
   border-bottom: 1px solid var(--border-color);
   background: #f8fafc;
+  /* Evitar que se desborde o se pueda deslizar */
+  overflow: hidden;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .doc-type-btn {
@@ -3722,4 +3726,381 @@ body {
 @keyframes sysDialogPop {
   from { opacity: 0; transform: scale(0.92) translateY(12px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ==================== TICKET PREVIEW PANEL ==================== */
+.ticket-preview-panel {
+  border-top: 1px solid var(--border-color);
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+.ticket-preview-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+
+.ticket-preview-toggle:hover {
+  background: #e2e8f0;
+  color: var(--text-main);
+}
+
+.ticket-preview-toggle .toggle-arrow {
+  transition: transform 0.2s;
+  font-size: 10px;
+}
+
+.ticket-preview-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.28s ease;
+}
+
+.ticket-preview-body.open {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.ticket-preview-paper-wrap {
+  padding: 10px 12px 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.ticket-preview-paper {
+  background: #fff;
+  border: 1px dashed #94a3b8;
+  border-radius: 4px;
+  padding: 12px 10px 10px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: #1e293b;
+  white-space: pre;
+  width: 100%;
+  max-width: 260px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow-x: auto;
+}
+
+.ticket-preview-empty {
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ==================== MODAL SELECTOR TIPO DE COMPROBANTE ==================== */
+.doc-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.55);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInBg 0.18s ease;
+}
+
+@keyframes fadeInBg {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.doc-picker-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 26px 22px 20px;
+  width: 340px;
+  max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(15,23,42,0.22);
+  animation: sysDialogPop 0.22s cubic-bezier(0.16,1,0.3,1);
+}
+
+.doc-picker-title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.doc-picker-subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 18px;
+}
+
+.doc-picker-options {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.doc-picker-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 6px 11px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.doc-picker-option:hover {
+  border-color: var(--primary);
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.doc-picker-option.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.doc-picker-option .dp-icon {
+  font-size: 22px;
+}
+
+.doc-picker-option .dp-serial {
+  font-size: 10px;
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.doc-picker-confirm {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.doc-picker-confirm:hover {
+  opacity: 0.9;
+}
+
+/* ==================== STATUS DOT GRAY (dispositivo desconectado) ==================== */
+.status-dot.dot-gray {
+  background: #94a3b8;
+  box-shadow: none;
+  animation: none;
+}
+
+/* ==================== CART SPLIT LAYOUT (tabla + preview ticket) ==================== */
+.pos-cart-panel {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cart-split-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Columna izquierda: lista editable de productos */
+.cart-items-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  border-right: 1.5px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.cart-items-col .cart-table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 8px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.cart-items-col .cart-summary {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-color);
+  padding: 10px 12px 12px;
+  background: #fff;
+}
+
+/* Columna derecha: vista previa del ticket real */
+.cart-preview-col {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  min-width: 170px;
+  max-width: 220px;
+  flex-shrink: 0;
+  background: #fafaf8;
+  overflow: hidden;
+}
+
+.cart-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px 6px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.cart-preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.cart-preview-doctype {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--primary);
+  background: #eff6ff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.cart-preview-paper-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 6px 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.cart-preview-paper {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 8.5px;
+  line-height: 1.45;
+  color: #1e293b;
+  white-space: pre;
+  width: 100%;
+  background: transparent;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0;
+  /* Simular papel térmico con degradado lateral */
+  border-left: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
+  padding: 4px 5px;
+}
+
+/* Responsive: en pantallas angostas la columna derecha se contrae */
+@media (max-width: 900px) {
+  .cart-preview-col {
+    width: 160px;
+    min-width: 140px;
+  }
+  .cart-preview-paper {
+    font-size: 7.5px;
+  }
+}
+
+@media (max-width: 720px) {
+  .cart-split-layout {
+    flex-direction: column;
+  }
+  .cart-preview-col {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    max-height: 200px;
+    border-right: none;
+    border-top: 1.5px solid #e2e8f0;
+  }
+}
+
+/* ==================== FÓRMULA DE NOMBRE DE PRODUCTO ==================== */
+.form-hint-formula {
+  margin-top: 7px;
+  padding: 10px 12px 9px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formula-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #3b82f6;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.formula-parts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.fpart {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 5px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.fsep {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  padding: 0 1px;
+}
+
+.formula-example {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.formula-example em {
+  color: #1d4ed8;
+  font-style: normal;
+  font-weight: 600;
 }

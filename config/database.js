@@ -47,7 +47,8 @@ const schema = [
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
   `CREATE TABLE IF NOT EXISTS products (
-    barcode TEXT PRIMARY KEY NOT NULL,
+    sku TEXT PRIMARY KEY NOT NULL,
+    barcode TEXT,
     name TEXT NOT NULL,
     brand_id INTEGER,
     category_id INTEGER,
@@ -65,7 +66,8 @@ const schema = [
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
     FOREIGN KEY (brand_id) REFERENCES brands(id) ON DELETE SET NULL
   )`,
-  `CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_products_sku ON products(sku)`,
+  `CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`,
   `CREATE INDEX IF NOT EXISTS idx_products_name ON products(name)`,
   `CREATE TABLE IF NOT EXISTS stock_movements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,7 +78,7 @@ const schema = [
     new_stock DECIMAL(10,3) NOT NULL,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(barcode) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES products(sku) ON DELETE CASCADE
   )`,
   `CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id)`,
   `CREATE TABLE IF NOT EXISTS users (
@@ -137,7 +139,7 @@ const schema = [
     igv DECIMAL(10,2) DEFAULT 0.00,
     subtotal DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(barcode) ON DELETE SET NULL
+    FOREIGN KEY (product_id) REFERENCES products(sku) ON DELETE SET NULL
   )`,
   `CREATE TABLE IF NOT EXISTS credit_payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

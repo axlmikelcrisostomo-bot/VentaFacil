@@ -1,7 +1,7 @@
 const { query, run, get } = require('../config/database');
 
 async function seed() {
-  console.log('🌱 Poblando datos de demostración realistas en las demás tablas del sistema...');
+  console.log('🌱 Verificando y poblando datos de configuración en el sistema...');
 
   try {
     // 1. Configuración de Empresa (company_config)
@@ -52,7 +52,7 @@ async function seed() {
     const customer2 = await get("SELECT id FROM customers WHERE document_number = '71293840'");
 
     // 4. Productos reales en DB
-    const products = await query('SELECT barcode, name, purchase_price, sale_price, stock FROM products LIMIT 10');
+    const products = await query('SELECT sku, barcode, name, purchase_price, sale_price, stock FROM products LIMIT 10');
 
     if (products.length > 0) {
       // 5. Historial de Kárdex / Movimientos de Stock (stock_movements)
@@ -62,7 +62,7 @@ async function seed() {
           await run(`
             INSERT INTO stock_movements (product_id, movement_type, quantity, previous_stock, new_stock, notes)
             VALUES (?, 'ENTRADA_COMPRA', 50, 0, 50, 'Ingreso por compra inicial de mercadería')
-          `, [p.barcode]);
+          `, [p.sku]);
         }
         console.log('  📦 Movimientos de Kárdex creados.');
       }
@@ -85,12 +85,12 @@ async function seed() {
         await run(`
           INSERT INTO sale_details (sale_id, product_id, product_name, barcode, unit_price, quantity, unit_measure, igv, subtotal)
           VALUES (?, ?, ?, ?, ?, 2, 'UNIDAD', ?, ?)
-        `, [sale1.lastID, p1.barcode, p1.name, p1.barcode, p1.sale_price, (p1.sale_price * 2 * 0.18), (p1.sale_price * 2)]);
+        `, [sale1.lastID, p1.sku, p1.name, p1.barcode || p1.sku, p1.sale_price, (p1.sale_price * 2 * 0.18), (p1.sale_price * 2)]);
 
         await run(`
           INSERT INTO sale_details (sale_id, product_id, product_name, barcode, unit_price, quantity, unit_measure, igv, subtotal)
           VALUES (?, ?, ?, ?, ?, 3, 'UNIDAD', ?, ?)
-        `, [sale1.lastID, p2.barcode, p2.name, p2.barcode, p2.sale_price, (p2.sale_price * 3 * 0.18), (p2.sale_price * 3)]);
+        `, [sale1.lastID, p2.sku, p2.name, p2.barcode || p2.sku, p2.sale_price, (p2.sale_price * 3 * 0.18), (p2.sale_price * 3)]);
 
         // Venta 2: Venta a Crédito / Fiado
         const p3 = products[2] || p1;
@@ -106,7 +106,7 @@ async function seed() {
         await run(`
           INSERT INTO sale_details (sale_id, product_id, product_name, barcode, unit_price, quantity, unit_measure, igv, subtotal)
           VALUES (?, ?, ?, ?, ?, 5, 'UNIDAD', ?, ?)
-        `, [sale2.lastID, p3.barcode, p3.name, p3.barcode, p3.sale_price, igv2, subtotal2]);
+        `, [sale2.lastID, p3.sku, p3.name, p3.barcode || p3.sku, p3.sale_price, igv2, subtotal2]);
 
         console.log('  🛒 Ventas de prueba (Boletas y Fiados) registradas.');
       }
@@ -122,11 +122,9 @@ async function seed() {
       }
     }
 
-    console.log('\n====================================================');
-    console.log('✅ BASE DE DATOS Y DATOS DE DEMOSTRACIÓN COMPLETADOS');
-    console.log('====================================================\n');
+    console.log('✅ Verificación de datos completada.');
   } catch (err) {
-    console.error('❌ Error al poblar datos de demostración:', err);
+    console.error('❌ Error al poblar datos:', err);
   }
 }
 

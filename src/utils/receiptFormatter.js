@@ -25,6 +25,24 @@ function divider(char = '-', width = LINE_WIDTH) {
   return char.repeat(width);
 }
 
+/**
+ * Resuelve la etiqueta corta de unidad de medida para el ticket.
+ * Ej: KGM/KILOGRAMO → "KG", BOTELLA → "BOT", BOLSA → "BLS", default → "UND"
+ */
+function resolveUnitLabel(item) {
+  if (item.is_bulk == 1 || item.is_bulk === true) return 'KG';
+  const raw = String(item.unit_measure || '').toUpperCase().trim();
+  if (['KG', 'KGM', 'KILOGRAMO', 'KILOGRAMOS', 'GRANEL'].includes(raw)) return 'KG';
+  if (['GR', 'GRAMOS'].includes(raw)) return 'GR';
+  if (['BOT', 'BOTELLA', 'BOTELLAS'].includes(raw)) return 'BOT';
+  if (['BLS', 'BOLSA', 'BOLSAS'].includes(raw)) return 'BLS';
+  if (['PAQ', 'PAQUETE', 'PAQUETES'].includes(raw)) return 'PAQ';
+  if (['LT', 'LTR', 'LITRO', 'LITROS'].includes(raw)) return 'LT';
+  if (['UNIDAD', 'UNIDADES'].includes(raw)) return 'UND';
+  if (raw && raw.length <= 5) return raw; // devolver tal cual si ya es corto
+  return 'UND';
+}
+
 function formatTicket58mm(sale, customTemplate = null) {
   const lines = [];
 
@@ -38,13 +56,13 @@ function formatTicket58mm(sale, customTemplate = null) {
 
   const isBve = sale.document_type === '03';
   const isFactura = sale.document_type === '01';
-  const docTitle = isFactura 
-    ? "FACTURA ELECTRÓNICA" 
-    : isBve 
-      ? "BOLETA DE VENTA ELECTRÓNICA" 
-      : "TICKET DE VENTA INTERNO";
+  const docTitle = isFactura
+    ? "FACTURA ELECTRONICA"
+    : isBve
+      ? "BOLETA DE VENTA ELEC."
+      : "TICKET DE VENTA";
 
-  // 1. ENCABEZADO FISCAL EMISOR (SUNAT)
+  // 1. ENCABEZADO FISCAL EMISOR
   lines.push(centerText(tpl.companyName || "COMERCIAL BELEZA & HOGAR"));
   lines.push(centerText("RUC: " + (tpl.ruc || "20601234567")));
   lines.push(centerText(tpl.address || "Av. Las Flores 456, Lima"));
@@ -54,67 +72,79 @@ function formatTicket58mm(sale, customTemplate = null) {
   lines.push(centerText(docTitle));
   lines.push(centerText(sale.invoice_number || 'B001-00000001'));
   lines.push(divider("-"));
-  
-  const formattedDate = sale.created_at 
+
+  const formattedDate = sale.created_at
     ? new Date(sale.created_at).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })
     : new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
 
   lines.push(justifyBetween("FECHA:", formattedDate));
   lines.push(justifyBetween("CAJERO:", sale.cashier_name || 'Caja 1'));
-  lines.push(justifyBetween("CLIENTE:", (sale.customer_name || 'CLIENTE GENERAL').substring(0, 20)));
+  lines.push(justifyBetween("CLIENTE:", (sale.customer_name || 'CLIENTE GENERAL').substring(0, 18)));
   if (sale.customer_doc_number) {
     lines.push(justifyBetween("DNI/RUC:", sale.customer_doc_number));
   }
+
+  // 3. ENCABEZADO DE PRODUCTOS — CANT/UNID  x  P.UNIT       TOTAL
+  lines.push(divider("-"));
+  lines.push(justifyBetween("CANT/UNID  x  P.UNIT", "TOTAL"));
   lines.push(divider("-"));
 
-  // 3. ENCABEZADO DE PRODUCTOS
-  lines.push(justifyBetween("DESCRIPCION / CANT x P.U.", "TOTAL"));
-  lines.push(divider("-"));
-
-  // 4. DETALLE DE PRODUCTOS (Estructura ordenada de 2 líneas: Cant x P.Unit a la izquierda, Total a la derecha)
+  // 4. DETALLE DE PRODUCTOS
+  //    Línea 1: Nombre del producto
+  //    Línea 2: [qty] [UNIT] x S/.price        S/.total
   const details = sale.items || sale.details || [];
   if (Array.isArray(details) && details.length > 0) {
     details.forEach((item) => {
       const qtyNum = parseFloat(item.quantity || 1);
-      const isBulk = (item.is_bulk == 1 || item.is_bulk === true || ['KG', 'KGM', 'KILOGRAMO', 'KILOGRAMOS', 'GR'].includes(String(item.unit_measure || '').toUpperCase()));
-      const qtyStr = isBulk ? `${qtyNum.toFixed(3)}kg` : `${parseInt(qtyNum, 10)}x`;
-      const name = item.product_name || item.name || 'Producto';
+      const unitLabel = resolveUnitLabel(item);
+      const isKgType = ['KG', 'GR'].includes(unitLabel);
+      const qtyFormatted = isKgType ? qtyNum.toFixed(3) : String(parseInt(qtyNum, 10));
+      const name = (item.product_name || item.name || 'Producto');
       const unitPriceVal = parseFloat(item.unit_price || item.sale_price || 0);
       const subtotalVal = parseFloat(item.subtotal || (qtyNum * unitPriceVal));
-      
-      const priceLeft = `  ${qtyStr} @ S/.${unitPriceVal.toFixed(2)}`;
-      const totalRight = `S/.${subtotalVal.toFixed(2)}`;
 
-      // Línea 1: Nombre del producto
+      // Línea 1: Nombre del producto (truncado al ancho de la hoja)
       lines.push(name.substring(0, LINE_WIDTH));
-      // Línea 2: [Cantidad x Precio Unitario] a la izquierda | [Total] a la derecha
-      lines.push(justifyBetween(priceLeft, totalRight));
+
+      // Línea 2: "2 BOT x S/.9.50         S/.19.00"
+      const leftPart = `${qtyFormatted} ${unitLabel} x S/.${unitPriceVal.toFixed(2)}`;
+      const rightPart = `S/.${subtotalVal.toFixed(2)}`;
+      lines.push(justifyBetween(leftPart, rightPart));
     });
   } else {
     lines.push("VENTA GENERAL");
-    lines.push(justifyBetween("  1x @ S/." + parseFloat(sale.total_amount || sale.total || 0).toFixed(2), "S/." + parseFloat(sale.total_amount || sale.total || 0).toFixed(2)));
+    const totalVal = parseFloat(sale.total_amount || sale.total || 0);
+    lines.push(justifyBetween("1 UND x S/." + totalVal.toFixed(2), "S/." + totalVal.toFixed(2)));
   }
 
-  // 5. TOTALES E IMPUESTOS (IGV 18% SUNAT)
+  // 5. TOTALES
   lines.push(divider("-"));
   const totalAmount = parseFloat(sale.total_amount || sale.total || 0);
-  const subtotalGravado = parseFloat(sale.subtotal || (totalAmount / 1.18));
-  const igvAmount = parseFloat(sale.igv || (totalAmount - subtotalGravado));
+  const subtotalBase = parseFloat(sale.subtotal || totalAmount);
 
-  lines.push(justifyBetween("OP. GRAVADA:", `S/. ${subtotalGravado.toFixed(2)}`));
-  lines.push(justifyBetween("I.G.V. (18%):", `S/. ${igvAmount.toFixed(2)}`));
+  if (isBve || isFactura) {
+    // Boleta / Factura → mostrar OP. GRAVADA + IGV
+    const subtotalGravado = totalAmount / 1.18;
+    const igvAmount = totalAmount - subtotalGravado;
+    lines.push(justifyBetween("OP. GRAVADA:", `S/.${subtotalGravado.toFixed(2)}`));
+    lines.push(justifyBetween("I.G.V. (18%):", `S/.${igvAmount.toFixed(2)}`));
+  } else {
+    // Ticket interno → solo SUBTOTAL
+    lines.push(justifyBetween("SUBTOTAL:", `S/.${subtotalBase.toFixed(2)}`));
+  }
   lines.push(divider("-"));
-  lines.push(justifyBetween("TOTAL A PAGAR:", `S/. ${totalAmount.toFixed(2)}`));
+  lines.push(justifyBetween("TOTAL A PAGAR:", `S/.${totalAmount.toFixed(2)}`));
+  lines.push(divider("-"));
 
   const isFiado = sale.payment_method === 'FIADO';
 
   if (isFiado) {
     lines.push(divider("="));
-    lines.push(centerText("*** VENTA AL CRÉDITO (FIADO) ***"));
+    lines.push(centerText("*** VENTA AL CREDITO (FIADO) ***"));
     lines.push(justifyBetween("ESTADO PAGO:", "PENDIENTE"));
-    lines.push(justifyBetween("FECHA LÍMITE:", sale.due_date ? String(sale.due_date).split('T')[0] : '15 Días'));
+    lines.push(justifyBetween("FECHA LIMITE:", sale.due_date ? String(sale.due_date).split('T')[0] : '15 Dias'));
     if (sale.customer_total_debt) {
-      lines.push(justifyBetween("DEUDA TOTAL:", `S/. ${parseFloat(sale.customer_total_debt).toFixed(2)}`));
+      lines.push(justifyBetween("DEUDA TOTAL:", `S/.${parseFloat(sale.customer_total_debt).toFixed(2)}`));
     }
     lines.push(divider("-"));
     lines.push(centerText("Firma del Cliente:"));
@@ -126,19 +156,19 @@ function formatTicket58mm(sale, customTemplate = null) {
     const paid = parseFloat(sale.amount_paid || totalAmount);
     const change = parseFloat(sale.change_due || (paid > totalAmount ? paid - totalAmount : 0));
     lines.push(justifyBetween("FORMA DE PAGO:", sale.payment_method || "EFECTIVO"));
-    lines.push(justifyBetween("IMPORTE PAGADO:", `S/. ${paid.toFixed(2)}`));
+    lines.push(justifyBetween("IMPORTE PAGADO:", `S/.${paid.toFixed(2)}`));
     if (change > 0) {
-      lines.push(justifyBetween("VUELTO / CAMBIO:", `S/. ${change.toFixed(2)}`));
+      lines.push(justifyBetween("VUELTO / CAMBIO:", `S/.${change.toFixed(2)}`));
     }
   }
 
   lines.push(divider("="));
 
-  // 6. INFORMACIÓN LEGAL SUNAT Y PIE DE TICKET
+  // 6. PIE LEGAL SUNAT
   if (isBve || isFactura) {
-    lines.push(centerText("Representación Impresa de la"));
+    lines.push(centerText("Representacion Impresa de la"));
     lines.push(centerText(docTitle));
-    lines.push(centerText("Autorizado según R.S. SUNAT"));
+    lines.push(centerText("Autorizado segun R.S. SUNAT"));
     lines.push(centerText("Hash: " + (sale.sunat_hash ? sale.sunat_hash.substring(0, 16) : '8f9a2b3c4d5e6f70')));
     lines.push(divider("-"));
   }

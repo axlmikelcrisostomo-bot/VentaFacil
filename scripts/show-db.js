@@ -15,10 +15,11 @@ async function showDB() {
     }
 
     console.log('\n-----------------------------------------------------');
-    console.log('📦 PRODUCTOS CON BARCODE / SKU COMO PRIMARY KEY (Primeros 15):');
+    console.log('📦 PRODUCTOS CON SKU COMO PRIMARY KEY (Primeros 15):');
     const products = await query(`
       SELECT 
-        p.barcode as pk_codigo_barras, 
+        p.sku as pk_sku,
+        p.barcode as codigo_barras, 
         p.name as producto, 
         b.name as marca,
         c.name as categoria, 
@@ -27,7 +28,7 @@ async function showDB() {
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id 
       LEFT JOIN brands b ON p.brand_id = b.id
-      ORDER BY p.name ASC 
+      ORDER BY p.sku ASC 
       LIMIT 15
     `);
     console.table(products);

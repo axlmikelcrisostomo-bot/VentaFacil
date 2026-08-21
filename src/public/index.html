@@ -76,8 +76,8 @@
           <button class="topbar-menu-btn" id="btnTopbarMenu" title="Ocultar / Mostrar Barra Lateral">☰</button>
           <div class="device-status">
             <!-- 1. Escáner USB / Barcode -->
-            <div class="device-indicator" id="scannerStatus" title="Escáner USB de Código de Barras: LISTO">
-              <span class="status-dot dot-green"></span>
+            <div class="device-indicator" id="scannerStatus" title="Escáner USB de Código de Barras">
+              <span class="status-dot dot-gray" id="dotScanner"></span>
               <svg class="device-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 5v4"/>
                 <path d="M21 5v4"/>
@@ -91,8 +91,8 @@
             </div>
 
             <!-- 2. Impresora Térmica -->
-            <button type="button" class="device-indicator device-btn" id="btnOpenPrinterConfig" title="Impresora Térmica: Conectada y Lista (Clic para configurar)">
-              <span class="status-dot dot-green"></span>
+            <button type="button" class="device-indicator device-btn" id="btnOpenPrinterConfig" title="Impresora Térmica (clic para configurar)">
+              <span class="status-dot dot-gray" id="dotPrinter"></span>
               <svg class="device-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 6 2 18 2 18 9"/>
                 <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -101,8 +101,8 @@
             </button>
 
             <!-- 3. SUNAT Cloud Check -->
-            <div class="device-indicator" id="sunatStatusPill" title="SUNAT Facturación Electrónica BVE: Conectado y LISTO">
-              <span class="status-dot dot-green"></span>
+            <div class="device-indicator" id="sunatStatusPill" title="SUNAT Facturación Electrónica BVE">
+              <span class="status-dot dot-gray" id="dotSunat"></span>
               <svg class="device-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
                 <polyline points="9 13 12 16 16 11"/>
@@ -134,7 +134,7 @@
           <input
             type="text"
             id="globalBarcodeScanner"
-            placeholder="Dispare con la pistola o escriba el código de barras / SKU para AÑADIR DIRECTO al ticket..."
+            placeholder="Dispare con la lectora o escriba el SKU / nombre para AÑADIR DIRECTO al ticket..."
             autocomplete="off"
             autofocus
           >
@@ -193,7 +193,7 @@
                   <thead>
                     <tr>
                       <th style="width: 36px; text-align: center;" title="Fijar como Producto Frecuente">⭐</th>
-                      <th style="width: 140px;">Código / SKU</th>
+                      <th style="width: 140px;">SKU</th>
                       <th>Producto</th>
                       <th style="width: 160px;">Categoría / Marca</th>
                       <th style="width: 110px;">Stock</th>
@@ -278,81 +278,81 @@
             <!-- PANEL DERECHO: TICKET / CARRITO -->
             <div class="pos-cart-panel">
 
-              <!-- TIPO DE COMPROBANTE -->
-              <div class="document-type-selector">
-                <button class="doc-type-btn active" data-type="03" id="dtBoleta">
-                  <span class="doc-icon">📄</span>
-                  <span class="doc-label">Boleta<br><small>B001</small></span>
-                </button>
-                <button class="doc-type-btn" data-type="01" id="dtFactura">
-                  <span class="doc-icon">📋</span>
-                  <span class="doc-label">Factura<br><small>F001</small></span>
-                </button>
-                <button class="doc-type-btn" data-type="00" id="dtTicket">
-                  <span class="doc-icon">🧾</span>
-                  <span class="doc-label">Ticket<br><small>Interno</small></span>
-                </button>
-              </div>
-
               <div class="cart-header">
                 <h3>Ticket Actual</h3>
                 <span class="cart-badge" id="cartItemsCount">0 ítems</span>
               </div>
 
-              <div class="cart-table-wrapper">
-                <table class="cart-table">
-                  <thead>
-                    <tr>
-                      <th>Cant./Peso</th>
-                      <th>Producto</th>
-                      <th>P.Unit</th>
-                      <th>Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody id="cartTableBody">
-                    <tr class="empty-cart-row">
-                      <td colspan="5">
-                        <div class="empty-cart-state">
-                          <span class="empty-icon">🛒</span>
-                          <p>Escanee un código de barras<br>o haga clic en un producto</p>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <!-- LAYOUT DOS COLUMNAS: tabla izquierda + preview derecha -->
+              <div class="cart-split-layout">
 
-              <!-- TOTALES -->
-              <div class="cart-summary">
-                <div class="summary-row">
-                  <span>Op. Gravada (sin IGV)</span>
-                  <span id="cartSubtotalGravada">S/. 0.00</span>
-                </div>
-                <div class="summary-row">
-                  <span>IGV (18%)</span>
-                  <span id="cartIgv">S/. 0.00</span>
-                </div>
-                <div class="summary-row total-row">
-                  <span>TOTAL A PAGAR</span>
-                  <span id="cartTotal">S/. 0.00</span>
+                <!-- Columna izquierda: productos editables -->
+                <div class="cart-items-col">
+                  <div class="cart-table-wrapper" style="flex:1;overflow-y:auto;padding:6px 8px;background:#f8fafc;">
+                    <table class="cart-table">
+                      <thead>
+                        <tr>
+                          <th>Cant./Peso</th>
+                          <th>Producto</th>
+                          <th>P.Unit</th>
+                          <th>Total</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="cartTableBody">
+                        <tr class="empty-cart-row">
+                          <td colspan="5">
+                            <div class="empty-cart-state">
+                              <span class="empty-icon">🛒</span>
+                              <p>Escanee un producto o SKU<br>o haga clic en la lista</p>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- TOTALES -->
+                  <div class="cart-summary">
+                    <div class="summary-row">
+                      <span>Op. Gravada (sin IGV)</span>
+                      <span id="cartSubtotalGravada">S/. 0.00</span>
+                    </div>
+                    <div class="summary-row">
+                      <span>IGV (18%)</span>
+                      <span id="cartIgv">S/. 0.00</span>
+                    </div>
+                    <div class="summary-row total-row">
+                      <span>TOTAL A PAGAR</span>
+                      <span id="cartTotal">S/. 0.00</span>
+                    </div>
+
+                    <!-- ACCIONES DE CARRITO -->
+                    <div class="cart-actions">
+                      <button class="btn-danger btn-outline" id="btnClearCart" title="Vaciar carrito">
+                        🗑️ Vaciar
+                      </button>
+                      <button class="btn-success btn-lg" id="btnCheckout">
+                        🖨️ PROCESAR E IMPRIMIR
+                        <span class="sunat-label" id="sunatLabelBtn">BVE SUNAT</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div class="cash-hint">
-                  Al presionar <strong>COBRAR</strong> se pedirá la forma de pago
+                <!-- Columna derecha: vista previa del ticket real -->
+                <div class="cart-preview-col">
+                  <div class="cart-preview-header">
+                    <span class="cart-preview-label">🖨️ Vista previa</span>
+                    <span class="cart-preview-doctype" id="previewDocTypeLabel">TICKET</span>
+                  </div>
+                  <div class="cart-preview-paper-wrap">
+                    <pre class="cart-preview-paper" id="ticketPreviewContent">Escanee un producto
+para ver el ticket...</pre>
+                  </div>
                 </div>
 
-                <!-- ACCIONES DE CARRITO -->
-                <div class="cart-actions">
-                  <button class="btn-danger btn-outline" id="btnClearCart" title="Vaciar carrito">
-                    🗑️ Vaciar
-                  </button>
-                  <button class="btn-success btn-lg" id="btnCheckout">
-                    🖨️ PROCESAR E IMPRIMIR
-                    <span class="sunat-label" id="sunatLabelBtn">BVE SUNAT</span>
-                  </button>
-                </div>
-              </div>
+              </div><!-- /cart-split-layout -->
 
             </div>
           </div>
@@ -458,7 +458,7 @@
             <div class="inventory-toolbar-card">
               <div class="inv-search-input-wrap">
                 <span class="inv-search-icon">🔍</span>
-                <input type="text" id="inventorySearchInput" placeholder="Buscar por producto, código de barras o marca..." autocomplete="off">
+                <input type="text" id="inventorySearchInput" placeholder="Buscar por producto, SKU o marca..." autocomplete="off">
                 <button type="button" id="btnInventorySearchClear" class="btn-inv-search-clear" style="display:none;" title="Limpiar búsqueda">&times;</button>
               </div>
               <div class="inv-filter-controls">
@@ -478,7 +478,7 @@
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Código / SKU</th>
+                    <th>SKU</th>
                     <th>Nombre del Producto</th>
                     <th>Tipo / Unidad</th>
                     <th>P. Compra</th>
@@ -925,6 +925,27 @@
                 </div>
               </div>
 
+              <!-- TARJETA 4: MANTENIMIENTO Y REINICIO DE INVENTARIO -->
+              <div class="card" id="cardInventoryMaintenance" style="background:#ffffff; border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                  <span style="font-size:24px;">🗑️</span>
+                  <div>
+                    <h3 style="font-size:15px; font-weight:700; color:var(--text-main); margin:0;">Mantenimiento y Reinicio de Inventario</h3>
+                    <small style="color:var(--text-muted);">Administración, vaciado y puesta a cero del catálogo</small>
+                  </div>
+                </div>
+                <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; padding:14px; margin-bottom:16px;">
+                  <strong style="color:#9f1239; font-size:13px; display:block; margin-bottom:4px;">⚠️ Zona de Acción Destructiva</strong>
+                  <p style="font-size:11.5px; color:#be123c; margin:0; line-height:1.4;">
+                    Si necesita empezar un catálogo completamente desde cero o preparar una base de datos limpia, puede vaciar todos los productos del sistema.
+                  </p>
+                </div>
+                <button type="button" class="btn-danger" id="btnSettingsClearInventory" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px 16px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:0.2s;">
+                  <span>🗑️</span>
+                  <span>Vaciar Catálogo de Productos a Cero</span>
+                </button>
+              </div>
+
             </div>
           </div>
         </section>
@@ -950,15 +971,31 @@
             <div class="form-section-title">📌 Datos Principales del Producto</div>
             <div class="form-grid col-2">
               <div class="form-group col-span-2">
-                <label>Código de Barras o SKU:</label>
+                <label>SKU (Identificador Único):</label>
                 <div class="input-with-btn">
-                  <input type="text" id="prodBarcode" required placeholder="Ej: 7750123001019 o SKU-000001">
-                  <button type="button" id="btnGenBarcode" class="btn-secondary btn-sm">🎲 Generar SKU</button>
+                  <input type="text" id="prodSku" required placeholder="Ej: SKU-000001">
+                  <button type="button" id="btnGenBarcode" class="btn-secondary btn-sm" title="Autogenerar el siguiente SKU correlativo">🎲 Generar SKU</button>
                 </div>
+                <input type="hidden" id="prodBarcode" value="">
               </div>
               <div class="form-group col-span-2">
                 <label>Nombre del Producto:</label>
-                <input type="text" id="prodName" required placeholder="Ej: Shampoo Ego Black 200ml o Pollo Entero Fresco">
+                <input type="text" id="prodName" required placeholder="Ej: Shampoo Ego Black Frasco 200ml">
+                <div class="form-hint-formula">
+                  <span class="formula-label">📐 Estructura recomendada:</span>
+                  <span class="formula-parts">
+                    <span class="fpart">[Tipo de Producto]</span>
+                    <span class="fsep">+</span>
+                    <span class="fpart">[Marca]</span>
+                    <span class="fsep">+</span>
+                    <span class="fpart">[Variante / Detalle]</span>
+                    <span class="fsep">+</span>
+                    <span class="fpart">[Tipo de Empaque]</span>
+                    <span class="fsep">+</span>
+                    <span class="fpart">[Contenido / Medida]</span>
+                  </span>
+                  <span class="formula-example">Ejemplo: <em>Shampoo · Ego · Black · Frasco · 200ml</em></span>
+                </div>
               </div>
               <div class="form-group">
                 <label>Categoría:</label>
@@ -1370,25 +1407,13 @@
           </div>
         </div>
 
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-top:14px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; cursor:pointer; color:#0f172a;">
-            <input type="checkbox" id="chkClearBeforeImport">
-            <span>🗑️ Borrar inventario actual antes de importar (Empezar catálogo desde 0)</span>
-          </label>
-        </div>
-
         <div id="importStatusResult" style="margin-top: 16px; display:none;" class="alert-banner">
           <div id="importStatusText"></div>
         </div>
       </div>
-      <div class="modal-footer" style="justify-content:space-between;">
-        <button type="button" class="btn-danger btn-sm" id="btnWipeCatalogNow" style="background:#ef4444; color:#fff; border:none; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
-          🗑️ Vaciar Inventario Ahora
-        </button>
-        <div style="display:flex; gap:10px;">
-          <button class="btn-secondary close-modal" data-modal="importCsvModal">Cancelar</button>
-          <button class="btn-primary" id="btnExecuteImport" style="background-color: var(--success);">⚡ IMPORTAR AHORA</button>
-        </div>
+      <div class="modal-footer" style="justify-content:flex-end; gap:10px;">
+        <button class="btn-secondary close-modal" data-modal="importCsvModal">Cancelar</button>
+        <button class="btn-primary" id="btnExecuteImport" style="background-color: var(--success);">⚡ IMPORTAR AHORA</button>
       </div>
     </div>
   </div>

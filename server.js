@@ -31,6 +31,7 @@ app.use(express.static(path.join(__dirname, 'src', 'public')));
 // 1. Productos (CRUD + Escáner + Importación CSV)
 app.get('/api/products', ProductController.getAll);
 app.get('/api/products/barcode/:barcode', ProductController.getByBarcode);
+app.get('/api/products/:id', ProductController.getById);
 app.post('/api/products', ProductController.create);
 app.post('/api/products/import-csv', ProductController.importCSV);
 app.post('/api/products/clear-catalog', ProductController.clearCatalog);

@@ -76,7 +76,7 @@ function parseCSV(content) {
 
   let headerIndex = lines.findIndex(line => {
     const l = line.toLowerCase();
-    return l.includes('codigo') || l.includes('sku') || l.includes('barcode') || l.includes('producto') || l.includes('name') || l.includes('descripcion');
+    return l.includes('sku') || l.includes('codigo') || l.includes('barcode') || l.includes('producto') || l.includes('name') || l.includes('descripcion');
   });
 
   if (headerIndex === -1) headerIndex = 0;
@@ -103,10 +103,10 @@ function parseCSV(content) {
 }
 
 async function getNextReservedSKU() {
-  const lastSKUProduct = await get("SELECT barcode FROM products WHERE barcode LIKE 'SKU-%' ORDER BY barcode DESC LIMIT 1");
+  const lastSKUProduct = await get("SELECT sku FROM products WHERE sku LIKE 'SKU-%' ORDER BY sku DESC LIMIT 1");
   let lastNum = 0;
-  if (lastSKUProduct && lastSKUProduct.barcode) {
-    const match = lastSKUProduct.barcode.match(/SKU-(\d+)/);
+  if (lastSKUProduct && lastSKUProduct.sku) {
+    const match = lastSKUProduct.sku.match(/SKU-(\d+)/);
     if (match) {
       lastNum = parseInt(match[1], 10);
     }
@@ -139,19 +139,20 @@ async function processRecordsArray(records) {
   let brandCount = 0;
 
   for (const record of records) {
-    const inputCode = record.id_codigo || record.sku || record.barcode || record.codigo || record.codigo_barras;
+    const rawSku = record.sku || record.id_sku || record.codigo_sku || record.pk_sku;
+    const rawBarcode = record.barcode || record.codigo_barras || record.id_codigo || record.codigo_barra || record.codigo || record.ean || record.upc;
     const name = record.descripcion_producto || record.nombre_producto || record.name || record.nombre || record.producto;
-    const brandName = record.marca_producto || record.marca || '';
+    const brandName = record.marca_producto || record.marca || record.brand || '';
     const categoryName = record.categoria || record.tipo_producto || record.category_name || record.category || 'General';
 
     const purchasePrice = parseMoney(record.precio_compra || record.precio_costo || record.costo || record.compra || record.purchase_price || 0);
     const salePrice = parseMoney(record.precio_venta || record.precio_unitario || record.sale_price || record.precio || 0);
     const stock = parseStock(record.stock || record.cantidad || 0);
     const minStock = parseFloat(record.min_stock || record.stock_minimo || 5) || 5;
-    const unitMeasure = record.unidad_medida || record.unit_measure || record.unidad || 'UNIDAD';
+    const unitMeasure = record.unidad_medida || record.unit_measure || record.unidad || record.tipo_unidad || 'UNIDAD';
     const expirationDate = parseDate(record.fecha_vencimiento || record.vencimiento);
     const registrationDate = parseDate(record.fecha_registro || record.registro || record.fecha);
-    const status = record.estado || 'DISPONIBLE';
+    const status = record.estado || record.status || 'DISPONIBLE';
 
     if (!name) continue;
 
@@ -181,29 +182,44 @@ async function processRecordsArray(records) {
       }
     }
 
-    // 3. Código / SKU
-    let finalBarcode = inputCode ? inputCode.trim() : '';
-    if (!finalBarcode || finalBarcode.toUpperCase() === 'FALTA LLENAR' || finalBarcode.toUpperCase() === 'SIN CODIGO') {
-      finalBarcode = await getNextReservedSKU();
+    // 3. Resolución de SKU (Primary Key) y Barcode
+    let finalSku = rawSku ? rawSku.trim() : '';
+    let finalBarcode = rawBarcode ? rawBarcode.trim() : '';
+
+    if (!finalSku) {
+      if (finalBarcode && finalBarcode.startsWith('SKU-')) {
+        finalSku = finalBarcode;
+        finalBarcode = '';
+      } else if (finalBarcode) {
+        // Tenemos código de barras pero no SKU: buscar si ya existe un producto con este barcode
+        const existByBarcode = await get('SELECT sku FROM products WHERE barcode = ?', [finalBarcode]);
+        if (existByBarcode) {
+          finalSku = existByBarcode.sku;
+        } else {
+          finalSku = await getNextReservedSKU();
+        }
+      } else {
+        finalSku = await getNextReservedSKU();
+      }
     }
 
     // 4. Upsert en products con fecha de registro
-    const existingProduct = await get('SELECT barcode FROM products WHERE barcode = ?', [finalBarcode]);
+    const existingProduct = await get('SELECT sku FROM products WHERE sku = ? OR (barcode IS NOT NULL AND barcode = ?)', [finalSku, finalBarcode]);
 
     if (existingProduct) {
       const updateDate = registrationDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
       await run(`
         UPDATE products 
-        SET name = ?, brand_id = ?, category_id = ?, purchase_price = ?, sale_price = ?, stock = ?, min_stock = ?, expiration_date = ?, status = ?, unit_measure = ?, updated_at = ?
-        WHERE barcode = ?
-      `, [name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, updateDate, finalBarcode]);
+        SET name = ?, barcode = ?, brand_id = ?, category_id = ?, purchase_price = ?, sale_price = ?, stock = ?, min_stock = ?, expiration_date = ?, status = ?, unit_measure = ?, updated_at = ?
+        WHERE sku = ?
+      `, [name.trim(), finalBarcode || null, brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, updateDate, existingProduct.sku]);
       updatedCount++;
     } else {
       const createDate = registrationDate || new Date().toISOString().replace('T', ' ').substring(0, 19);
       await run(`
-        INSERT INTO products (barcode, name, brand_id, category_id, purchase_price, sale_price, stock, min_stock, expiration_date, status, unit_measure, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [finalBarcode, name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, createDate, createDate]);
+        INSERT INTO products (sku, barcode, name, brand_id, category_id, purchase_price, sale_price, stock, min_stock, expiration_date, status, unit_measure, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [finalSku, finalBarcode || null, name.trim(), brandId, categoryId, purchasePrice, salePrice, stock, minStock, expirationDate, status, unitMeasure, createDate, createDate]);
       importedCount++;
     }
   }
@@ -226,14 +242,26 @@ class ProductController {
     try {
       const barcode = ScannerService.cleanBarcode(req.params.barcode);
       if (!ScannerService.isValidBarcode(barcode)) {
-        return res.status(400).json({ success: false, error: 'Código de barras inválido' });
+        return res.status(400).json({ success: false, error: 'Código o SKU inválido' });
       }
 
       const product = await ProductModel.getByBarcode(barcode);
       if (!product) {
-        return res.status(404).json({ success: false, message: `Producto no encontrado para el código: ${barcode}` });
+        return res.status(404).json({ success: false, message: `Producto no encontrado para el código/SKU: ${barcode}` });
       }
 
+      res.json({ success: true, data: product });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  static async getById(req, res) {
+    try {
+      const product = await ProductModel.getById(req.params.id);
+      if (!product) {
+        return res.status(404).json({ success: false, message: `Producto no encontrado con identificador ${req.params.id}` });
+      }
       res.json({ success: true, data: product });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -243,7 +271,7 @@ class ProductController {
   static async create(req, res) {
     try {
       const result = await ProductModel.create(req.body);
-      res.status(201).json({ success: true, message: 'Producto creado exitosamente', barcode: result.barcode });
+      res.status(201).json({ success: true, message: 'Producto creado exitosamente', sku: result.sku, barcode: result.barcode });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
@@ -270,7 +298,7 @@ class ProductController {
   // Importar CSV enviado por texto/archivo o por URL
   static async importCSV(req, res) {
     try {
-      const { csvText, sheetsUrl, clearBeforeImport = false } = req.body;
+      const { csvText, sheetsUrl } = req.body;
       let rawText = csvText || '';
 
       if (sheetsUrl && sheetsUrl.trim() !== '') {
@@ -284,10 +312,6 @@ class ProductController {
       const records = parseCSV(rawText);
       if (records.length === 0) {
         return res.status(400).json({ success: false, error: 'El archivo CSV está vacío o el formato de encabezado no es válido.' });
-      }
-
-      if (clearBeforeImport) {
-        await ProductModel.clearAll();
       }
 
       const stats = await processRecordsArray(records);

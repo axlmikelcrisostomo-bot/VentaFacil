@@ -158,6 +158,7 @@ const State = {
 
 let checkoutPayMode = 'pay';
 let checkoutPayMethod = 'EFECTIVO';
+let editingSku = null;
 
 // ============================================================
 // 2. FUNCIONES DE CARGA ASÍNCRONA (API SQLite)
@@ -283,7 +284,19 @@ function renderCategoryChips(categories) {
   
   categories.forEach(c => {
     const icon = getIconForCat(c.name);
-    const count = State.products.filter(p => p.category_id === c.id).length;
+    // Contar según el modo activo y búsqueda actual (no solo total)
+    const searchTerm = (document.getElementById('posSearchInput')?.value || '').trim();
+    let poolForCount = State.products;
+    if (State.catalogMode === 'frequent') {
+      poolForCount = State.products.filter(p => State.frequentProductIds.includes(String(p.sku || p.barcode || p.id)));
+    }
+    if (searchTerm) {
+      poolForCount = poolForCount.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+    const count = poolForCount.filter(p => p.category_id === c.id).length;
     html += `<button class="cat-chip ${String(State.selectedCategoryId) === String(c.id) ? 'active' : ''}" data-cat="${c.id}">${icon} ${c.name} ${count > 0 ? `(${count})` : ''}</button>`;
   });
 
@@ -330,13 +343,14 @@ function renderProductListTable(products) {
   // Si estamos en modo Frecuentes, mostrar ÚNICAMENTE los productos guardados por el cliente
   if (State.catalogMode === 'frequent') {
     displayProducts = (products || []).filter(p => {
-      const key = String(p.barcode || p.id);
+      const key = String(p.sku || p.barcode || p.id);
       return State.frequentProductIds.includes(key);
     });
 
     if (searchTerm) {
       displayProducts = displayProducts.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.barcode && p.barcode.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
@@ -369,8 +383,9 @@ function renderProductListTable(products) {
     const isLow = p.stock <= p.min_stock;
     const typeLabel = p.is_bulk ? '🥩 Granel/Kg' : (p.unit_measure || 'UNIDAD');
     const brandName = p.brand_name ? `<span class="prod-brand-cell">${p.brand_name} · </span>` : '';
-    const itemKey = String(p.barcode || p.id);
+    const itemKey = String(p.sku || p.barcode || p.id);
     const isFav = State.frequentProductIds.includes(itemKey);
+    const displayCode = p.sku || '—';
 
     return `
       <tr onclick="addToCart('${itemKey}')" title="Clic para añadir al carrito">
@@ -379,7 +394,7 @@ function renderProductListTable(products) {
             ${isFav ? '⭐' : '☆'}
           </button>
         </td>
-        <td><span class="prod-sku-badge">${p.barcode}</span></td>
+        <td><span class="prod-sku-badge">${displayCode}</span></td>
         <td><span class="prod-name-cell">${p.name}</span></td>
         <td><span class="prod-brand-cell">${brandName}${p.category_name || 'General'}</span></td>
         <td>
@@ -412,9 +427,9 @@ function renderProductGrid(products) {
     const isLow = p.stock <= p.min_stock;
     const typeLabel = p.is_bulk ? '🥩 PESABLE/Kg' : `📦 ${p.unit_measure || 'UNIDAD'}`;
     const brandName = p.brand_name ? `${p.brand_name} · ` : '';
-    const itemKey = p.barcode || p.id;
+    const itemKey = p.sku || p.barcode || p.id;
     return `
-      <div class="product-card ${p.is_bulk ? 'bulk-card' : ''}" onclick="addToCart('${itemKey}')" title="Código: ${p.barcode}">
+      <div class="product-card ${p.is_bulk ? 'bulk-card' : ''}" onclick="addToCart('${itemKey}')" title="SKU: ${p.sku || p.barcode}">
         <span class="product-card-type">${typeLabel}</span>
         <h4>${p.name}</h4>
         <small class="category-name">${brandName}${p.category_name || 'General'}</small>
@@ -635,7 +650,7 @@ function updateWeighTotal() {
 }
 
 function addToCart(productId) {
-  let product = State.products.find(p => p.barcode === String(productId) || p.id === productId);
+  let product = State.products.find(p => p.sku === String(productId) || p.barcode === String(productId) || p.id === productId);
   if (!product && typeof productId === 'object') product = productId;
   if (!product) return;
 
@@ -644,8 +659,8 @@ function addToCart(productId) {
     return;
   }
 
-  const key = product.barcode || product.id;
-  const existing = State.cart.find(i => (i.barcode || i.id) === key);
+  const key = product.sku || product.barcode || product.id;
+  const existing = State.cart.find(i => (i.sku || i.barcode || i.id) === key);
   if (existing) existing.quantity += 1;
   else State.cart.push({ ...product, quantity: 1 });
 
@@ -655,12 +670,12 @@ function addToCart(productId) {
 }
 
 function removeFromCart(productId) {
-  State.cart = State.cart.filter(i => (i.barcode || i.id) !== productId);
+  State.cart = State.cart.filter(i => (i.sku || i.barcode || i.id) !== productId);
   renderCart();
 }
 
 function changeQty(productId, delta) {
-  const item = State.cart.find(i => (i.barcode || i.id) === productId);
+  const item = State.cart.find(i => (i.sku || i.barcode || i.id) === productId);
   if (!item) return;
   const newQty = parseFloat((item.quantity + delta).toFixed(3));
   if (newQty <= 0) { removeFromCart(productId); return; }
@@ -682,13 +697,13 @@ function renderCart() {
   if (!tbody) return;
 
   if (!State.cart.length) {
-    tbody.innerHTML = `<tr class="empty-cart-row"><td colspan="5"><div class="empty-cart-state"><span class="empty-icon">🛒</span><p>Escanee un código de barras<br>o haga clic en un producto</p></div></td></tr>`;
+    tbody.innerHTML = `<tr class="empty-cart-row"><td colspan="5"><div class="empty-cart-state"><span class="empty-icon">🛒</span><p>Escanee un código de barras o SKU<br>o haga clic en un producto</p></div></td></tr>`;
     return;
   }
 
   tbody.innerHTML = State.cart.map(item => {
     const lineTotal = item.sale_price * item.quantity;
-    const itemKey = item.barcode || item.id;
+    const itemKey = item.sku || item.barcode || item.id;
     return `
       <tr class="cart-item-row">
         <td class="cart-col-qty">
@@ -701,7 +716,7 @@ function renderCart() {
         <td class="cart-col-info">
           <div class="cart-item-title">${item.name}</div>
           <div class="cart-item-meta">
-            <span class="cart-item-barcode">${item.barcode}</span>
+            <span class="cart-item-barcode">${item.sku || item.barcode}</span>
             ${item.is_bulk ? '<span class="cart-item-bulk-tag">Kg</span>' : ''}
           </div>
         </td>
@@ -716,16 +731,131 @@ function renderCart() {
         </td>
       </tr>`;
   }).join('');
+
+  // Actualizar vista previa del ticket cada vez que cambia el carrito
+  renderTicketPreview();
 }
 
 // ============================================================
-// 5. BÚSQUEDA Y ESCÁNER DE CÓDIGOS DE BARRAS
+// VISTA PREVIA DEL TICKET
+// ============================================================
+function renderTicketPreview() {
+  const previewEl = document.getElementById('ticketPreviewContent');
+  if (!previewEl) return;
+
+  if (!State.cart.length) {
+    previewEl.textContent = 'Agregue productos al carrito\npara ver la vista previa...';
+    return;
+  }
+
+  const tplCfg = TicketTemplateConfig ? TicketTemplateConfig.get() : {};
+  const companyName = tplCfg.companyName || 'COMERCIAL BELEZA & HOGAR';
+  const ruc = tplCfg.ruc || '20601234567';
+  const address = tplCfg.address || 'Av. Las Flores 456, Lima';
+  const footer1 = tplCfg.footer1 || '¡Gracias por su preferencia!';
+  const footer2 = tplCfg.footer2 || 'Conserve este comprobante';
+  const W = tplCfg.columns || 32;
+
+  const cText = (t) => {
+    const s = String(t || '').trim();
+    if (s.length >= W) return s.substring(0, W);
+    return ' '.repeat(Math.floor((W - s.length) / 2)) + s;
+  };
+  const jBetween = (l, r) => {
+    const ls = String(l || '');
+    const rs = String(r || '');
+    const maxL = W - rs.length - 1;
+    const tl = ls.length > maxL ? ls.substring(0, maxL) : ls;
+    return tl + ' '.repeat(Math.max(1, W - tl.length - rs.length)) + rs;
+  };
+  const divLine = (c = '-') => c.repeat(W);
+
+  // Resolver etiqueta de unidad de medida
+  const resolveUnit = (item) => {
+    if (item.is_bulk) return 'KG';
+    const raw = String(item.unit_measure || '').toUpperCase();
+    if (['KG','KGM','KILOGRAMO','GRANEL'].includes(raw)) return 'KG';
+    if (['BOT','BOTELLA'].includes(raw)) return 'BOT';
+    if (['BLS','BOLSA'].includes(raw)) return 'BLS';
+    if (['PAQ','PAQUETE'].includes(raw)) return 'PAQ';
+    if (['LT','LTR','LITRO'].includes(raw)) return 'LT';
+    if (raw && raw.length <= 5) return raw;
+    return 'UND';
+  };
+
+  const docType = State.documentType || '00';
+  const isBve = docType === '03';
+  const isFactura = docType === '01';
+  const docTitle = isFactura ? 'FACTURA ELECTRONICA' : isBve ? 'BOLETA DE VENTA ELEC.' : 'TICKET DE VENTA';
+  const total = State.cart.reduce((s, i) => s + (i.sale_price * i.quantity), 0);
+  const now = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+
+  const lines = [];
+  lines.push(cText(companyName));
+  lines.push(cText('RUC: ' + ruc));
+  lines.push(cText(address));
+  lines.push(divLine('='));
+  lines.push(cText(docTitle));
+  lines.push(cText('VISTA PREVIA'));
+  lines.push(divLine('-'));
+  lines.push(jBetween('FECHA:', now));
+  lines.push(jBetween('CAJERO:', 'Caja 1'));
+  lines.push(jBetween('CLIENTE:', 'CLIENTE GENERAL'));
+  lines.push(divLine('-'));
+  lines.push(jBetween('CANT/UNID  x  P.UNIT', 'TOTAL'));
+  lines.push(divLine('-'));
+
+  State.cart.forEach(item => {
+    const qty = item.quantity;
+    const unit = resolveUnit(item);
+    const isKg = ['KG','GR'].includes(unit);
+    const qtyFmt = isKg ? qty.toFixed(3) : String(parseInt(qty));
+    const name = (item.name || 'Producto').substring(0, W);
+    const price = parseFloat(item.sale_price);
+    const subtotal = price * qty;
+    lines.push(name);
+    lines.push(jBetween(`${qtyFmt} ${unit} x S/.${price.toFixed(2)}`, `S/.${subtotal.toFixed(2)}`));
+  });
+
+  lines.push(divLine('-'));
+  if (isBve || isFactura) {
+    const base = total / 1.18;
+    const igv = total - base;
+    lines.push(jBetween('OP. GRAVADA:', `S/.${base.toFixed(2)}`));
+    lines.push(jBetween('I.G.V. (18%):', `S/.${igv.toFixed(2)}`));
+  } else {
+    lines.push(jBetween('SUBTOTAL:', `S/.${total.toFixed(2)}`));
+  }
+  lines.push(divLine('-'));
+  lines.push(jBetween('TOTAL A PAGAR:', `S/.${total.toFixed(2)}`));
+  lines.push(divLine('-'));
+  lines.push(divLine('='));
+  lines.push(jBetween('FORMA DE PAGO:', 'EFECTIVO'));
+  lines.push(divLine('='));
+  lines.push(cText(footer1));
+  if (footer2) lines.push(cText(footer2));
+  lines.push(divLine('='));
+
+  previewEl.textContent = lines.join('\n');
+}
+
+
+// ============================================================
+// 5. BÚSQUEDA Y ESCÁNER DE CÓDIGOS DE BARRAS & SKU
 // ============================================================
 async function searchByBarcode(barcode) {
   const clean = barcode.trim();
   if (!clean) return;
 
-  let product = State.products.find(p => p.barcode === clean || p.name.toLowerCase().includes(clean.toLowerCase()));
+  let product = State.products.find(p => 
+    (p.barcode && p.barcode.toLowerCase() === clean.toLowerCase()) || 
+    (p.sku && p.sku.toLowerCase() === clean.toLowerCase())
+  );
+
+  if (!product) {
+    product = State.products.find(p => p.name.toLowerCase().includes(clean.toLowerCase()));
+  }
+
   if (!product) {
     try {
       const res = await fetch(`/api/products/barcode/${encodeURIComponent(clean)}`);
@@ -737,11 +867,23 @@ async function searchByBarcode(barcode) {
   }
 
   if (product) {
-    addToCart(product.barcode || product.id);
+    addToCart(product.sku || product.barcode || product.id);
     const sc = document.getElementById('globalBarcodeScanner');
     if (sc) sc.value = '';
+    showToast(`✅ Añadido: ${product.sku || ''} · ${product.name}`, 'success');
+
+    // Activar dot del escáner brevemente (indica actividad del lector)
+    const dotScanner = document.getElementById('dotScanner');
+    if (dotScanner) {
+      dotScanner.className = 'status-dot dot-green';
+      clearTimeout(dotScanner._scannerTimer);
+      dotScanner._scannerTimer = setTimeout(() => {
+        dotScanner.className = 'status-dot dot-gray';
+      }, 3000);
+    }
+
   } else {
-    alert(`❌ Producto no encontrado:\n"${clean}"\n\nAsegúrate de registrarlo primero en Inventario.`);
+    showToast(`❌ Producto no encontrado para "${clean}"`, 'warning');
     const sc = document.getElementById('globalBarcodeScanner');
     if (sc) sc.value = '';
   }
@@ -912,6 +1054,7 @@ function applyInventoryFilters() {
     const q = inventorySearchQuery.trim().toLowerCase();
     list = list.filter(p => 
       (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q)) ||
       (p.barcode && p.barcode.toLowerCase().includes(q)) ||
       (p.brand_name && p.brand_name.toLowerCase().includes(q))
     );
@@ -974,9 +1117,10 @@ function renderInventoryTableRows(products) {
   if (!tbody) return;
 
   if (!products.length) {
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:35px; color:var(--text-muted);">
-      <div style="font-size: 26px; margin-bottom: 6px;">🔍</div>
-      No se encontraron productos con los filtros seleccionados.<br>
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:35px 20px; color:var(--text-muted);">
+      <span style="font-size:28px; display:block; margin-bottom:6px;">📦</span>
+      <strong>No hay productos que coincidan con los filtros aplicados</strong><br>
+      <small style="display:block; margin-top:4px;">Prueba cambiando el término de búsqueda o categoría.</small>
       <button type="button" class="btn-secondary btn-sm" onclick="resetInventoryFilters()" style="margin-top: 10px; cursor:pointer;">📋 Restablecer Filtros</button>
     </td></tr>`;
     return;
@@ -993,7 +1137,8 @@ function renderInventoryTableRows(products) {
     const statusLabel = p.is_active
       ? `<span class="status-badge" style="background:var(--success-light);color:var(--success)">Activo</span>`
       : `<span class="status-badge" style="background:#e2e8f0;color:var(--text-muted)">Inactivo</span>`;
-    const itemKey = p.barcode || p.id;
+    const itemKey = p.sku || p.barcode || p.id;
+    const displayCode = p.sku || '—';
 
     let stockDisplay = '';
     if (isZero) {
@@ -1007,7 +1152,7 @@ function renderInventoryTableRows(products) {
     return `
       <tr class="${rowClass}">
         <td style="color:var(--text-dim)">${i + 1}</td>
-        <td><span class="barcode-badge">${p.barcode}</span></td>
+        <td><span class="barcode-badge" title="Identificador SKU">${displayCode}</span></td>
         <td><strong>${p.name}</strong><br><small style="color:var(--text-muted);">${p.brand_name || ''}</small></td>
         <td>${typeLabel}</td>
         <td style="font-family:var(--font-mono)">S/.${parseFloat(p.purchase_price || 0).toFixed(2)}</td>
@@ -1216,22 +1361,43 @@ function switchTab(tabId) {
   else if (tabId === 'settingsTab') loadSettingsView();
 }
 
+function calculateNextSku() {
+  let maxNum = 0;
+  if (State.products && State.products.length) {
+    State.products.forEach(p => {
+      const s = p.sku || p.barcode || '';
+      const match = s.match(/SKU-(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    });
+  }
+  return `SKU-${String(maxNum + 1).padStart(6, '0')}`;
+}
+
 function openProductModalForCreate() {
-  editingBarcode = null;
+  editingSku = null;
   const title = document.getElementById('productModalTitle');
   if (title) title.textContent = '📦 Registrar Producto';
   const form = document.getElementById('productForm');
   if (form) form.reset();
+
+  const nextSku = calculateNextSku();
+  if (document.getElementById('prodSku')) document.getElementById('prodSku').value = nextSku;
+  if (document.getElementById('prodBarcode')) document.getElementById('prodBarcode').value = '';
+
   openModal('productModal');
 }
 
-async function editProduct(barcodeKey) {
-  const p = State.products.find(x => x.barcode === String(barcodeKey) || x.id === barcodeKey || String(x.id) === String(barcodeKey));
+async function editProduct(itemKey) {
+  const p = State.products.find(x => x.sku === String(itemKey) || x.barcode === String(itemKey) || x.id === itemKey || String(x.id) === String(itemKey));
   if (!p) return;
-  editingBarcode = p.barcode || p.id;
+  editingSku = p.sku || p.barcode || p.id;
   const title = document.getElementById('productModalTitle');
   if (title) title.textContent = `✏️ Editar Producto — ${p.name}`;
 
+  if (document.getElementById('prodSku')) document.getElementById('prodSku').value = p.sku || '';
   if (document.getElementById('prodBarcode')) document.getElementById('prodBarcode').value = p.barcode || '';
   if (document.getElementById('prodName')) document.getElementById('prodName').value = p.name || '';
   if (document.getElementById('prodCategory')) document.getElementById('prodCategory').value = p.category_id || '';
@@ -1245,12 +1411,12 @@ async function editProduct(barcodeKey) {
   openModal('productModal');
 }
 
-async function adjustStock(barcodeKey) {
-  const p = State.products.find(x => x.barcode === String(barcodeKey) || x.id === barcodeKey || String(x.id) === String(barcodeKey));
+async function adjustStock(itemKey) {
+  const p = State.products.find(x => x.sku === String(itemKey) || x.barcode === String(itemKey) || x.id === itemKey || String(x.id) === String(itemKey));
   if (!p) return;
 
   const type = prompt(
-    `📦 AJUSTE DE STOCK PARA: "${p.name}"\nStock Actual: ${p.stock} ${p.unit_measure || 'UNIDAD'}\n\nSeleccione el tipo de movimiento:\n1 = 📥 ENTRADA / COMPRA (+)\n2 = 📤 SALIDA / MERMA (-)`,
+    `📦 AJUSTE DE STOCK PARA: "${p.name}" (SKU: ${p.sku})\nStock Actual: ${p.stock} ${p.unit_measure || 'UNIDAD'}\n\nSeleccione el tipo de movimiento:\n1 = 📥 ENTRADA / COMPRA (+)\n2 = 📤 SALIDA / MERMA (-)`,
     '1'
   );
 
@@ -1273,29 +1439,29 @@ async function adjustStock(barcodeKey) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        product_id: p.id,
+        product_id: p.sku || p.barcode,
         barcode: p.barcode,
         movement_type: type === '1' ? 'ENTRADA' : 'SALIDA',
         quantity: qty,
-        reason
+        notes: reason
       })
     });
     const json = await res.json();
     if (json.success) {
-      alert(`✅ Stock actualizado exitosamente.`);
+      showToast(`✅ Stock actualizado exitosamente.`, 'success');
       loadProducts();
     } else {
-      alert('❌ Error al ajustar stock: ' + (json.error || 'Error en servidor'));
+      showToast('❌ Error al ajustar stock: ' + (json.error || 'Error en servidor'), 'error');
     }
   } catch (err) {
-    alert('❌ Error de comunicación: ' + err.message);
+    showToast('❌ Error de comunicación: ' + err.message, 'error');
   }
 }
 
-async function deleteProduct(barcodeKey) {
-  const confirmed = await showAppConfirm(`¿Está seguro de eliminar el producto "${barcodeKey}"?`, 'Eliminar Producto', 'danger', '🗑️ Sí, Eliminar', 'Cancelar');
+async function deleteProduct(itemKey) {
+  const confirmed = await showAppConfirm(`¿Está seguro de eliminar el producto "${itemKey}"?`, 'Eliminar Producto', 'danger', '🗑️ Sí, Eliminar', 'Cancelar');
   if (confirmed) {
-    await fetch(`/api/products/${encodeURIComponent(barcodeKey)}`, { method: 'DELETE' });
+    await fetch(`/api/products/${encodeURIComponent(itemKey)}`, { method: 'DELETE' });
     showToast('Producto eliminado exitosamente', 'success');
     loadProducts();
   }
@@ -1398,11 +1564,84 @@ async function cancelSale(saleId) {
 // ============================================================
 // 10. CHECKOUT Y VENTAS
 // ============================================================
+// ============================================================
+// MODAL SELECTOR DE TIPO DE COMPROBANTE (antes de cobrar)
+// ============================================================
+function openDocTypePicker() {
+  // Si ya existe, eliminar el anterior
+  const existing = document.getElementById('docTypePickerOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'doc-picker-overlay';
+  overlay.id = 'docTypePickerOverlay';
+
+  const options = [
+    { type: '03', icon: '📄', label: 'Boleta',  serial: 'B001' },
+    { type: '01', icon: '📋', label: 'Factura', serial: 'F001' },
+    { type: '00', icon: '🧾', label: 'Ticket',  serial: 'Interno' }
+  ];
+
+  let selected = State.documentType || '03';
+
+  const buildOptions = () => options.map(o => `
+    <button type="button" class="doc-picker-option ${selected === o.type ? 'selected' : ''}" data-type="${o.type}">
+      <span class="dp-icon">${o.icon}</span>
+      <span>${o.label}</span>
+      <span class="dp-serial">${o.serial}</span>
+    </button>`).join('');
+
+  overlay.innerHTML = `
+    <div class="doc-picker-box">
+      <div class="doc-picker-title">¿Qué tipo de comprobante?</div>
+      <div class="doc-picker-subtitle">Selecciona antes de procesar la venta</div>
+      <div class="doc-picker-options" id="dpOptions">${buildOptions()}</div>
+      <button class="doc-picker-confirm" id="dpConfirm">✅ Confirmar y Cobrar</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Eventos de selección
+  overlay.querySelectorAll('.doc-picker-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selected = btn.dataset.type;
+      overlay.querySelectorAll('.doc-picker-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // Confirmar
+  overlay.querySelector('#dpConfirm').addEventListener('click', () => {
+    State.documentType = selected;
+    // Actualizar etiqueta en la cabecera de la vista previa
+    const previewLabel = document.getElementById('previewDocTypeLabel');
+    if (previewLabel) {
+      previewLabel.textContent = selected === '00' ? 'TICKET' : (selected === '01' ? 'FACTURA' : 'BOLETA');
+    }
+    // Actualizar etiqueta en el botón principal
+    const label = document.getElementById('sunatLabelBtn');
+    if (label) label.textContent = selected === '00' ? 'TICKET INTERNO' : (selected === '01' ? 'FACTURA SUNAT' : 'BVE SUNAT');
+    overlay.remove();
+    // Regenerar la vista previa con el nuevo tipo seleccionado
+    renderTicketPreview();
+    openCheckoutPayModal();
+  });
+
+  // Cerrar al hacer clic fuera del box
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
 function openCheckoutModal() {
   if (!State.cart.length) {
     alert('El carrito está vacío. Agregue productos antes de cobrar.');
     return;
   }
+  openDocTypePicker();
+}
+
+function openCheckoutPayModal() {
   const total = State.cart.reduce((s, i) => s + (i.sale_price * i.quantity), 0);
   if (document.getElementById('checkoutTotalDisplay')) {
     document.getElementById('checkoutTotalDisplay').textContent = `S/. ${total.toFixed(2)}`;
@@ -1476,6 +1715,46 @@ async function confirmCheckout() {
 // ============================================================
 // 11. INICIALIZACIÓN COMPLETA DE EVENTOS
 // ============================================================
+
+// Verificar estado real de dispositivos (impresora, SUNAT)
+async function checkDeviceStatuses() {
+  // 1. ESCÁNER: Se activa solo cuando escanea exitosamente (ver searchByBarcode)
+  //    Por defecto: gris (no hay API para detectar USB sin backend)
+
+  // 2. IMPRESORA: verificar si hay impresoras en Windows vía API
+  try {
+    const res = await fetch('/api/printers');
+    const json = await res.json();
+    const hasPrinters = json && json.data && json.data.length > 0;
+    const dot = document.getElementById('dotPrinter');
+    const indicator = document.getElementById('btnOpenPrinterConfig');
+    if (dot) {
+      dot.className = `status-dot ${hasPrinters ? 'dot-green' : 'dot-gray'}`;
+    }
+    if (indicator) {
+      indicator.title = hasPrinters
+        ? `Impresora lista: ${json.data[0].Name} (clic para configurar)`
+        : 'Sin impresora detectada en Windows (clic para configurar)';
+    }
+  } catch (_) {}
+
+  // 3. SUNAT: verificar si hay credenciales configuradas
+  try {
+    const sunatCfg = JSON.parse(localStorage.getItem('vf_sunat_config'));
+    const hasCredentials = sunatCfg && sunatCfg.ruc && sunatCfg.sol_user && sunatCfg.sol_pass;
+    const dot = document.getElementById('dotSunat');
+    const indicator = document.getElementById('sunatStatusPill');
+    if (dot) {
+      dot.className = `status-dot ${hasCredentials ? 'dot-green' : 'dot-gray'}`;
+    }
+    if (indicator) {
+      indicator.title = hasCredentials
+        ? `SUNAT BVE: Credenciales configuradas (RUC ${sunatCfg.ruc})`
+        : 'SUNAT: Sin credenciales configuradas';
+    }
+  } catch (_) {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Cargar datos iniciales
   loadProducts();
@@ -1483,6 +1762,23 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCustomers();
   loadSunatConfig();
   renderCart();
+
+  // Verificar estado de dispositivos al iniciar y cada 30s
+  checkDeviceStatuses();
+  setInterval(checkDeviceStatuses, 30000);
+
+  // Toggle de vista previa del ticket
+  const btnPreviewToggle = document.getElementById('btnTicketPreviewToggle');
+  const previewBody = document.getElementById('ticketPreviewBody');
+  if (btnPreviewToggle && previewBody) {
+    btnPreviewToggle.addEventListener('click', () => {
+      const isOpen = previewBody.classList.toggle('open');
+      btnPreviewToggle.classList.toggle('open', isOpen);
+      const arrow = btnPreviewToggle.querySelector('.toggle-arrow');
+      if (arrow) arrow.style.transform = isOpen ? 'rotate(180deg)' : '';
+      if (isOpen) renderTicketPreview();
+    });
+  }
 
   // Reloj en vivo
   function updateClock() {
@@ -1494,6 +1790,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setInterval(updateClock, 1000);
   updateClock();
+
 
   // Navegación Sidebar
   document.querySelectorAll('.sidebar-nav .nav-btn').forEach(btn => {
@@ -1516,18 +1813,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnScanSearch.addEventListener('click', () => searchByBarcode(scanInput.value));
   }
 
-  // Selector de comprobante
-  document.querySelectorAll('.doc-type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.doc-type-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      State.documentType = btn.dataset.type || '03';
-      const label = document.getElementById('sunatLabelBtn');
-      if (label) {
-        label.textContent = State.documentType === '00' ? 'TICKET INTERNO' : (State.documentType === '01' ? 'FACTURA SUNAT' : 'BVE SUNAT');
-      }
-    });
-  });
+  // Selector de comprobante (botones eliminados del DOM, ahora solo via modal emergente)
+  // Se mantiene State.documentType = '03' (Boleta) por defecto
+  // La selección ocurre en openDocTypePicker() al presionar PROCESAR E IMPRIMIR
 
   // Botón checkout
   const btnCheckout = document.getElementById('btnCheckout');
@@ -2270,8 +2558,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGenBarcode = document.getElementById('btnGenBarcode');
   if (btnGenBarcode) {
     btnGenBarcode.addEventListener('click', () => {
-      const rand = Math.floor(100000 + Math.random() * 900000);
-      document.getElementById('prodBarcode').value = `SKU-${rand}`;
+      const nextSku = calculateNextSku();
+      if (document.getElementById('prodSku')) document.getElementById('prodSku').value = nextSku;
     });
   }
 
@@ -2508,8 +2796,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (importStatusResult) importStatusResult.style.display = 'none';
 
       try {
-        const clearBeforeImport = document.getElementById('chkClearBeforeImport')?.checked || false;
-        const payload = isFileTab ? { csvText: selectedCsvText, clearBeforeImport } : { sheetsUrl, clearBeforeImport };
+        const payload = isFileTab ? { csvText: selectedCsvText } : { sheetsUrl };
         const response = await fetch('/api/products/import-csv', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2525,7 +2812,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (importStatusText) {
             importStatusText.innerHTML = `
               <strong>✅ Importación completada con éxito:</strong><br>
-              ${clearBeforeImport ? '• 🗑️ Catálogo anterior vaciado previamente<br>' : ''}
               • ${result.stats.importedCount} productos nuevos insertados<br>
               • ${result.stats.updatedCount} productos actualizados<br>
               • ${result.stats.categoryCount} categorías procesadas<br>
@@ -2559,36 +2845,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Vaciar Inventario Completo para empezar desde 0
-  const btnWipeCatalogNow = document.getElementById('btnWipeCatalogNow');
-  if (btnWipeCatalogNow) {
-    btnWipeCatalogNow.addEventListener('click', async () => {
-      const confirmDelete = confirm('⚠️ ¿Está seguro de que desea borrar TODO el catálogo de productos?\n\nEsta acción eliminará todos los artículos registrados para que pueda importar su archivo CSV limpio desde cero.');
-      if (!confirmDelete) return;
-
-      try {
-        const res = await fetch('/api/products/clear-catalog', { method: 'POST' });
-        const json = await res.json();
-        if (json.success) {
-          alert('✅ Catálogo de productos vaciado exitosamente.\n\nAhora puede subir su archivo CSV desde cero.');
-          loadProducts();
-          loadCategories();
-          const importStatusResult = document.getElementById('importStatusResult');
-          const importStatusText = document.getElementById('importStatusText');
-          if (importStatusResult && importStatusText) {
-            importStatusResult.className = 'alert-banner text-success';
-            importStatusResult.style.display = 'block';
-            importStatusText.innerHTML = '<strong>✅ Inventario reiniciado a 0.</strong> Listo para importar.';
-          }
-        } else {
-          alert('❌ Error al vaciar catálogo: ' + json.error);
-        }
-      } catch (err) {
-        alert('❌ Error de comunicación: ' + err.message);
-      }
-    });
-  }
-
   // Sincronización automática de Tipo de Venta y Unidad de Medida
   const prodIsBulk = document.getElementById('prodIsBulk');
   const prodUnit = document.getElementById('prodUnit');
@@ -2608,7 +2864,8 @@ document.addEventListener('DOMContentLoaded', () => {
     productForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const payload = {
-        barcode: document.getElementById('prodBarcode')?.value.trim(),
+        sku: document.getElementById('prodSku')?.value.trim(),
+        barcode: document.getElementById('prodBarcode')?.value.trim() || null,
         name: document.getElementById('prodName')?.value.trim(),
         category_id: document.getElementById('prodCategory')?.value || null,
         purchase_price: parseFloat(document.getElementById('prodCostPrice')?.value || 0),
@@ -2620,8 +2877,8 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const url = editingBarcode ? `/api/products/${encodeURIComponent(editingBarcode)}` : '/api/products';
-        const method = editingBarcode ? 'PUT' : 'POST';
+        const url = editingSku ? `/api/products/${encodeURIComponent(editingSku)}` : '/api/products';
+        const method = editingSku ? 'PUT' : 'POST';
 
         const res = await fetch(url, {
           method,
@@ -2630,16 +2887,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const json = await res.json();
         if (json.success) {
-          alert(editingBarcode ? '✅ Producto actualizado exitosamente' : '✅ Producto registrado exitosamente');
+          showToast(editingSku ? '✅ Producto actualizado exitosamente' : '✅ Producto registrado exitosamente', 'success');
           closeModal('productModal');
-          editingBarcode = null;
+          editingSku = null;
           productForm.reset();
           loadProducts();
         } else {
-          alert('❌ Error: ' + json.error);
+          showToast('❌ Error: ' + json.error, 'error');
         }
       } catch (err) {
-        alert('❌ Error al guardar producto: ' + err.message);
+        showToast('❌ Error al guardar producto: ' + err.message, 'error');
       }
     });
   }
@@ -3102,6 +3359,37 @@ function loadSettingsView() {
   updateTicketLivePreview();
   loadSystemPrinters();
 }
+
+// Event Listeners de Configuración para Mantenimiento de Catálogo
+document.addEventListener('DOMContentLoaded', () => {
+  const btnSettingsClearInventory = document.getElementById('btnSettingsClearInventory');
+  if (btnSettingsClearInventory) {
+    btnSettingsClearInventory.addEventListener('click', async () => {
+      const confirmed = await showAppConfirm(
+        '⚠️ ATENCIÓN: ¿Está seguro de que desea VACIAR TODO EL INVENTARIO A CERO?\n\nEsta acción eliminará todos los productos registrados para permitirle cargar una nueva base de datos limpia.',
+        'Vaciar Catálogo a Cero',
+        'danger',
+        '🗑️ Sí, Vaciar Inventario',
+        'Cancelar'
+      );
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch('/api/products/clear-catalog', { method: 'POST' });
+        const json = await res.json();
+        if (json.success) {
+          showToast('✅ Catálogo de productos vaciado exitosamente a 0.', 'success');
+          loadProducts();
+          loadCategories();
+        } else {
+          showToast('❌ Error: ' + json.error, 'error');
+        }
+      } catch (err) {
+        showToast('❌ Error de comunicación: ' + err.message, 'error');
+      }
+    });
+  }
+});
 
 // ============================================================
 // CONFIGURACIÓN DE PLANTILLA DE TICKET 58MM & LIVE PREVIEW
